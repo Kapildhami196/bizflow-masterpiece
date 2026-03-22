@@ -1,36 +1,40 @@
+import { useNavigate } from "react-router-dom";
 import { AppShell } from "@/components/layout/AppShell";
-import { QuickActionCard } from "@/components/shared/QuickActionCard";
+import { MenuListItem } from "@/components/shared/MenuListItem";
 import { SectionHeader } from "@/components/shared/SectionHeader";
 import {
-  Landmark, BookCheck, ClipboardList, Package,
-  Flag, HelpCircle, CreditCard, FileText,
+  Package, Warehouse, BarChart3, Tag, Wallet,
+  Users, Settings, ShoppingCart, FileText, User,
 } from "lucide-react";
 
 const MorePage = () => {
+  const navigate = useNavigate();
+
   return (
     <AppShell headerTitle="More">
-      <SectionHeader title="Requests" />
-      <div className="px-4 grid grid-cols-4 gap-3">
-        <QuickActionCard icon={<Landmark size={22} />} label="Fixed Deposit" />
-        <QuickActionCard icon={<BookCheck size={22} />} label="Cheque Books" />
+      {/* Business Tools */}
+      <SectionHeader title="Business Tools" />
+      <div className="mx-4 bg-card rounded-xl border border-border overflow-hidden divide-y divide-border">
+        <MenuListItem icon={<Package size={18} />} title="Products" subtitle="Product & service catalog" onClick={() => navigate("/products")} />
+        <MenuListItem icon={<Warehouse size={18} />} title="Inventory" subtitle="Stock tracking & movements" onClick={() => navigate("/inventory")} />
+        <MenuListItem icon={<ShoppingCart size={18} />} title="POS" subtitle="Point of sale checkout" />
+        <MenuListItem icon={<FileText size={18} />} title="Billing & Invoice" subtitle="Invoices, receipts, credit notes" />
       </div>
 
-      <SectionHeader title="Customer Service" />
-      <div className="px-4 grid grid-cols-4 gap-3">
-        <QuickActionCard icon={<ClipboardList size={22} />} label="Activity Log" />
-        <QuickActionCard icon={<Package size={22} />} label="Products" />
-        <QuickActionCard icon={<Flag size={22} />} label="Report a Problem" />
-        <QuickActionCard icon={<HelpCircle size={22} />} label="FAQ" />
+      {/* Management */}
+      <SectionHeader title="Management" />
+      <div className="mx-4 bg-card rounded-xl border border-border overflow-hidden divide-y divide-border">
+        <MenuListItem icon={<Tag size={18} />} title="Categories" subtitle="Income, expense & business categories" onClick={() => navigate("/categories")} />
+        <MenuListItem icon={<Wallet size={18} />} title="Accounts" subtitle="Cash, bank, wallet accounts" onClick={() => navigate("/accounts")} />
+        <MenuListItem icon={<Users size={18} />} title="Contacts" subtitle="Customers, suppliers, parties" />
+        <MenuListItem icon={<BarChart3 size={18} />} title="Reports" subtitle="Business & financial reports" onClick={() => navigate("/reports")} />
       </div>
 
-      <SectionHeader title="Card Services" />
-      <div className="px-4 grid grid-cols-4 gap-3">
-        <QuickActionCard icon={<CreditCard size={22} />} label="Card Services" />
-      </div>
-
-      <SectionHeader title="Statement Request" />
-      <div className="px-4 grid grid-cols-4 gap-3 pb-4">
-        <QuickActionCard icon={<FileText size={22} />} label="Statement Request" />
+      {/* Account */}
+      <SectionHeader title="Account" />
+      <div className="mx-4 bg-card rounded-xl border border-border overflow-hidden divide-y divide-border mb-4">
+        <MenuListItem icon={<User size={18} />} title="Profile" subtitle="Your profile & business info" onClick={() => navigate("/profile")} />
+        <MenuListItem icon={<Settings size={18} />} title="Settings" subtitle="Preferences, security, data" onClick={() => navigate("/settings")} />
       </div>
     </AppShell>
   );

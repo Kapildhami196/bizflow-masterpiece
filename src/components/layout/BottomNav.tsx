@@ -1,11 +1,11 @@
 import { useLocation, useNavigate } from "react-router-dom";
-import { Home, CreditCard, SendHorizontal, MoreHorizontal, BookOpen } from "lucide-react";
+import { Home, BookOpen, CreditCard, ArrowLeftRight, MoreHorizontal } from "lucide-react";
 
 const navItems = [
   { path: "/", icon: Home, label: "Home" },
   { path: "/ledger", icon: BookOpen, label: "Ledger" },
+  { path: "/transactions", icon: ArrowLeftRight, label: "Txns" },
   { path: "/emi-loans", icon: CreditCard, label: "EMI" },
-  { path: "/send-money", icon: SendHorizontal, label: "Send" },
   { path: "/more", icon: MoreHorizontal, label: "More" },
 ];
 

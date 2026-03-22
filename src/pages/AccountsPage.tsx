@@ -75,7 +75,7 @@ const AccountsPage = () => {
             <div key={idx} className="flex items-center justify-between px-4 py-3 border-b border-border last:border-b-0">
               <span className="text-sm text-muted-foreground">{item.label}</span>
               {item.badge ? (
-                <span className="text-xs font-semibold bg-blue-500 text-white px-2 py-0.5 rounded">{item.value}</span>
+                <span className="text-xs font-semibold bg-primary text-primary-foreground px-2 py-0.5 rounded">{item.value}</span>
               ) : (
                 <span className="text-sm font-semibold text-card-foreground">{item.value}</span>
               )}

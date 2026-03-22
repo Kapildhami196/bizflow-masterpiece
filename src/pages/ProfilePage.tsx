@@ -2,7 +2,7 @@ import { useNavigate } from "react-router-dom";
 import { AppShell } from "@/components/layout/AppShell";
 import { MenuListItem } from "@/components/shared/MenuListItem";
 import { SectionHeader } from "@/components/shared/SectionHeader";
-import { User, LogOut, Lock, Fingerprint, ShieldQuestion, Trophy } from "lucide-react";
+import { User, Building2, Phone, Mail, MapPin, Edit, Wallet } from "lucide-react";
 
 const ProfilePage = () => {
   const navigate = useNavigate();
@@ -15,18 +15,18 @@ const ProfilePage = () => {
           <button onClick={() => navigate(-1)} className="p-1">
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M15 18l-6-6 6-6"/></svg>
           </button>
-          <h1 className="text-lg font-semibold">My Profile</h1>
+          <h1 className="text-lg font-semibold">Profile</h1>
+          <button className="ml-auto p-2 rounded-full hover:bg-primary-foreground/10">
+            <Edit size={18} />
+          </button>
         </div>
         <div className="flex items-center gap-4">
           <div className="w-16 h-16 rounded-full border-2 border-primary-foreground/30 flex items-center justify-center bg-primary-foreground/10">
-            <span className="text-xl font-bold">PD</span>
+            <span className="text-xl font-bold">KD</span>
           </div>
           <div>
-            <p className="text-xl font-bold">PARAS DHAMI</p>
-            <div className="flex items-center gap-2 text-sm opacity-80">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="5" y="2" width="14" height="20" rx="2"/><path d="M12 18h.01"/></svg>
-              9868569297
-            </div>
+            <p className="text-xl font-bold">Kapil Dhami</p>
+            <p className="text-sm opacity-80">Business Owner</p>
           </div>
         </div>
       </header>
@@ -34,33 +34,66 @@ const ProfilePage = () => {
       <div className="h-1 bg-destructive w-full" />
 
       <main className="flex-1 overflow-y-auto pb-8 -mt-2">
-        {/* Reward Points Card */}
-        <div className="mx-4 bg-card rounded-xl border border-border p-4 flex items-center justify-between">
-          <div>
-            <p className="text-xs text-muted-foreground mb-1">Available Reward Points</p>
-            <p className="text-2xl font-bold text-card-foreground">2196.00 <span className="text-sm font-normal text-muted-foreground">Points</span></p>
-            <button className="mt-2 border border-border text-sm px-4 py-1.5 rounded-lg text-card-foreground font-medium">
-              View Points
-            </button>
+        {/* Business Info Card */}
+        <div className="mx-4 bg-card rounded-xl border border-border p-4">
+          <div className="flex items-center gap-2 mb-3">
+            <Building2 size={16} className="text-primary" />
+            <p className="text-sm font-semibold text-card-foreground">My Business</p>
           </div>
-          <div className="w-14 h-14 rounded-full bg-warning/20 flex items-center justify-center">
-            <Trophy size={24} className="text-warning" />
+          <div className="space-y-2">
+            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+              <Phone size={14} />
+              <span>9868569297</span>
+            </div>
+            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+              <Mail size={14} />
+              <span>kapil@elekha.com</span>
+            </div>
+            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+              <MapPin size={14} />
+              <span>Dhangadhi, Kailali</span>
+            </div>
           </div>
         </div>
 
-        {/* Basic Information */}
-        <SectionHeader title="Basic Information" />
+        {/* Account Details */}
+        <SectionHeader title="Accounts" />
         <div className="mx-4 bg-card rounded-xl border border-border overflow-hidden divide-y divide-border">
-          <MenuListItem icon={<User size={18} />} title="My Information" subtitle="View your basic information." />
-          <MenuListItem icon={<LogOut size={18} />} title="Logout" subtitle="Logout of this app." />
+          <MenuListItem
+            icon={<Wallet size={18} />}
+            title="Cash in Hand"
+            subtitle="Primary cash account"
+            rightContent={<span className="text-sm font-bold text-success">₹25,400</span>}
+          />
+          <MenuListItem
+            icon={<Wallet size={18} />}
+            title="Business Bank"
+            subtitle="Main bank account"
+            rightContent={<span className="text-sm font-bold text-success">₹1,45,000</span>}
+          />
+          <MenuListItem
+            icon={<Wallet size={18} />}
+            title="eSewa"
+            subtitle="Digital wallet"
+            rightContent={<span className="text-sm font-bold text-success">₹3,200</span>}
+          />
         </div>
 
-        {/* Security Settings */}
-        <SectionHeader title="Security Settings" />
-        <div className="mx-4 bg-card rounded-xl border border-border overflow-hidden divide-y divide-border">
-          <MenuListItem icon={<Lock size={18} />} title="Change Password" subtitle="Change Password" />
-          <MenuListItem icon={<Fingerprint size={18} />} title="Setup Biometrics" subtitle="Setup Biometrics" />
-          <MenuListItem icon={<ShieldQuestion size={18} />} title="Security Questions" subtitle="Security Questions" />
+        {/* Quick Stats */}
+        <SectionHeader title="This Month" />
+        <div className="mx-4 bg-card rounded-xl border border-border overflow-hidden">
+          {[
+            { label: "Total Sales", value: "₹1,25,000" },
+            { label: "Total Collections", value: "₹98,000" },
+            { label: "Total Purchases", value: "₹72,000" },
+            { label: "Active EMI Plans", value: "3" },
+            { label: "Parties", value: "24" },
+          ].map((item, idx) => (
+            <div key={idx} className="flex items-center justify-between px-4 py-3 border-b border-border last:border-b-0">
+              <span className="text-sm text-muted-foreground">{item.label}</span>
+              <span className="text-sm font-semibold text-card-foreground">{item.value}</span>
+            </div>
+          ))}
         </div>
       </main>
     </div>

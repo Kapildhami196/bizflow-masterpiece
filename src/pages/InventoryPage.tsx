@@ -1,6 +1,7 @@
+import { useState } from "react";
 import { AppShell } from "@/components/layout/AppShell";
 import { SectionHeader } from "@/components/shared/SectionHeader";
-import { Package, AlertTriangle, ArrowDownLeft, ArrowUpRight, RotateCcw } from "lucide-react";
+import { Package, AlertTriangle, ArrowDownLeft, ArrowUpRight, RotateCcw, X } from "lucide-react";
 
 const stockItems = [
   { name: "Basmati Rice (25kg)", stock: 45, unit: "bag", value: 94500, status: "ok" as const },
@@ -19,12 +20,13 @@ const recentMovements = [
 ];
 
 const InventoryPage = () => {
+  const [showForm, setShowForm] = useState(false);
+  const [formType, setFormType] = useState<"in" | "adjust">("in");
   const totalValue = stockItems.reduce((s, i) => s + i.value, 0);
   const lowStockCount = stockItems.filter(i => i.status === "low").length;
 
   return (
     <AppShell headerTitle="Inventory">
-      {/* Summary */}
       <div className="grid grid-cols-3 gap-2 px-4 pt-4">
         <div className="bg-card rounded-lg border border-border p-3 text-center">
           <Package size={16} className="text-primary mx-auto mb-1" />
@@ -38,11 +40,10 @@ const InventoryPage = () => {
         </div>
         <div className="bg-card rounded-lg border border-border p-3 text-center">
           <p className="text-[10px] text-muted-foreground mb-1">Stock Value</p>
-          <p className="text-sm font-bold text-card-foreground">₹{(totalValue / 1000).toFixed(0)}K</p>
+          <p className="text-sm font-bold text-card-foreground">NPR {(totalValue / 1000).toFixed(0)}K</p>
         </div>
       </div>
 
-      {/* Low Stock Alert */}
       {lowStockCount > 0 && (
         <div className="mx-4 mt-3 bg-warning/10 border border-warning/20 rounded-xl p-4 flex items-center gap-3">
           <AlertTriangle size={20} className="text-warning shrink-0" />
@@ -53,14 +54,11 @@ const InventoryPage = () => {
         </div>
       )}
 
-      {/* Stock List */}
       <SectionHeader title="Stock on Hand" actionLabel="View All" />
       <div className="mx-4 bg-card rounded-xl border border-border overflow-hidden divide-y divide-border">
         {stockItems.map((item, idx) => (
           <div key={idx} className="flex items-center gap-3 px-4 py-3.5">
-            <div className={`w-10 h-10 rounded-lg flex items-center justify-center shrink-0 ${
-              item.status === "low" ? "bg-warning/15" : "bg-accent"
-            }`}>
+            <div className={`w-10 h-10 rounded-lg flex items-center justify-center shrink-0 ${item.status === "low" ? "bg-warning/15" : "bg-accent"}`}>
               <Package size={18} className={item.status === "low" ? "text-warning" : "text-primary"} />
             </div>
             <div className="flex-1 min-w-0">
@@ -70,47 +68,69 @@ const InventoryPage = () => {
                 {item.status === "low" && <span className="text-warning font-semibold"> • Low</span>}
               </p>
             </div>
-            <p className="text-sm font-semibold text-card-foreground">₹{item.value.toLocaleString()}</p>
+            <p className="text-sm font-semibold text-card-foreground">NPR {item.value.toLocaleString()}</p>
           </div>
         ))}
       </div>
 
-      {/* Recent Movements */}
       <SectionHeader title="Recent Movements" actionLabel="View All" />
       <div className="mx-4 bg-card rounded-xl border border-border overflow-hidden divide-y divide-border mb-4">
         {recentMovements.map((m, idx) => (
           <div key={idx} className="flex items-center gap-3 px-4 py-3">
-            <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 ${
-              m.type === "in" ? "bg-success/15" : "bg-destructive/15"
-            }`}>
-              {m.type === "in" ? (
-                <ArrowDownLeft size={14} className="text-success" />
-              ) : (
-                <ArrowUpRight size={14} className="text-destructive" />
-              )}
+            <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 ${m.type === "in" ? "bg-success/15" : "bg-destructive/15"}`}>
+              {m.type === "in" ? <ArrowDownLeft size={14} className="text-success" /> : <ArrowUpRight size={14} className="text-destructive" />}
             </div>
             <div className="flex-1 min-w-0">
               <p className="text-sm font-medium text-card-foreground">{m.name}</p>
               <p className="text-[11px] text-muted-foreground">{m.date} • {m.reason}</p>
             </div>
-            <p className={`text-sm font-semibold ${m.type === "in" ? "text-success" : "text-destructive"}`}>
-              {m.qty}
-            </p>
+            <p className={`text-sm font-semibold ${m.type === "in" ? "text-success" : "text-destructive"}`}>{m.qty}</p>
           </div>
         ))}
       </div>
 
-      {/* Actions */}
       <div className="px-4 pb-4 grid grid-cols-2 gap-3">
-        <button className="bg-primary text-primary-foreground py-3 rounded-xl font-semibold text-sm flex items-center justify-center gap-2">
-          <ArrowDownLeft size={16} />
-          Stock In
+        <button onClick={() => { setFormType("in"); setShowForm(true); }} className="bg-primary text-primary-foreground py-3 rounded-xl font-semibold text-sm flex items-center justify-center gap-2">
+          <ArrowDownLeft size={16} /> Stock In
         </button>
-        <button className="border-2 border-primary text-primary py-3 rounded-xl font-semibold text-sm flex items-center justify-center gap-2">
-          <RotateCcw size={16} />
-          Adjust
+        <button onClick={() => { setFormType("adjust"); setShowForm(true); }} className="border-2 border-primary text-primary py-3 rounded-xl font-semibold text-sm flex items-center justify-center gap-2">
+          <RotateCcw size={16} /> Adjust
         </button>
       </div>
+
+      {showForm && (
+        <div className="fixed inset-0 bg-foreground/50 z-50 flex items-end">
+          <div className="w-full max-w-md mx-auto bg-card rounded-t-2xl p-5 animate-in slide-in-from-bottom">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-lg font-bold text-card-foreground">{formType === "in" ? "Stock In" : "Stock Adjustment"}</h2>
+              <button onClick={() => setShowForm(false)}><X size={20} className="text-muted-foreground" /></button>
+            </div>
+            <div className="space-y-3">
+              <select className="w-full bg-background border border-border rounded-xl py-3 px-4 text-sm text-card-foreground focus:outline-none focus:ring-2 focus:ring-ring">
+                <option value="">Select Product *</option>
+                {stockItems.map((item, idx) => <option key={idx}>{item.name}</option>)}
+              </select>
+              <div className="grid grid-cols-2 gap-3">
+                <input placeholder="Quantity *" type="number" className="w-full bg-background border border-border rounded-xl py-3 px-4 text-sm text-card-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring" />
+                <input placeholder="Rate (NPR)" type="number" className="w-full bg-background border border-border rounded-xl py-3 px-4 text-sm text-card-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring" />
+              </div>
+              {formType === "adjust" && (
+                <select className="w-full bg-background border border-border rounded-xl py-3 px-4 text-sm text-card-foreground focus:outline-none focus:ring-2 focus:ring-ring">
+                  <option>Damage</option>
+                  <option>Lost</option>
+                  <option>Return</option>
+                  <option>Correction</option>
+                </select>
+              )}
+              <input type="date" className="w-full bg-background border border-border rounded-xl py-3 px-4 text-sm text-card-foreground focus:outline-none focus:ring-2 focus:ring-ring" />
+              <textarea placeholder="Remarks" rows={2} className="w-full bg-background border border-border rounded-xl py-3 px-4 text-sm text-card-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring resize-none" />
+              <button onClick={() => setShowForm(false)} className="w-full bg-primary text-primary-foreground py-3.5 rounded-xl font-semibold text-sm">
+                Save
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </AppShell>
   );
 };

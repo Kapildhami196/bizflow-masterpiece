@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { AppShell } from "@/components/layout/AppShell";
-import { Search, Plus, Package, MoreVertical } from "lucide-react";
+import { Search, Plus, Package, X } from "lucide-react";
 
 const tabs = ["All", "Items", "Services"];
 
@@ -15,6 +15,7 @@ const products = [
 
 const ProductsPage = () => {
   const [activeTab, setActiveTab] = useState("All");
+  const [showForm, setShowForm] = useState(false);
   const filtered = activeTab === "All" ? products : products.filter(p => p.kind === activeTab.toLowerCase().slice(0, -1));
 
   return (
@@ -39,23 +40,14 @@ const ProductsPage = () => {
       <div className="px-4 pt-4">
         <div className="relative">
           <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
-          <input
-            placeholder="Search products..."
-            className="w-full bg-card border border-border rounded-lg py-2.5 pl-9 pr-3 text-sm text-card-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring"
-          />
+          <input placeholder="Search products..." className="w-full bg-card border border-border rounded-lg py-2.5 pl-9 pr-3 text-sm text-card-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring" />
         </div>
       </div>
 
       {/* Tabs */}
       <div className="flex gap-2 px-4 pt-3">
         {tabs.map(tab => (
-          <button
-            key={tab}
-            onClick={() => setActiveTab(tab)}
-            className={`px-4 py-1.5 rounded-full text-xs font-semibold transition-colors ${
-              activeTab === tab ? "bg-primary text-primary-foreground" : "bg-card border border-border text-muted-foreground"
-            }`}
-          >
+          <button key={tab} onClick={() => setActiveTab(tab)} className={`px-4 py-1.5 rounded-full text-xs font-semibold transition-colors ${activeTab === tab ? "bg-primary text-primary-foreground" : "bg-card border border-border text-muted-foreground"}`}>
             {tab}
           </button>
         ))}
@@ -73,20 +65,13 @@ const ProductsPage = () => {
               <div className="flex items-center gap-2 text-[11px] text-muted-foreground">
                 <span className="capitalize">{p.kind}</span>
                 {p.stock !== null && (
-                  <>
-                    <span>•</span>
-                    <span className={p.stock < 5 ? "text-warning font-semibold" : ""}>
-                      Stock: {p.stock} {p.unit}
-                    </span>
-                  </>
+                  <><span>•</span><span className={p.stock < 5 ? "text-warning font-semibold" : ""}>Stock: {p.stock} {p.unit}</span></>
                 )}
               </div>
             </div>
             <div className="text-right">
-              <p className="text-sm font-bold text-card-foreground">₹{p.salePrice.toLocaleString()}</p>
-              {p.costPrice > 0 && (
-                <p className="text-[10px] text-muted-foreground">Cost: ₹{p.costPrice}</p>
-              )}
+              <p className="text-sm font-bold text-card-foreground">NPR {p.salePrice.toLocaleString()}</p>
+              {p.costPrice > 0 && <p className="text-[10px] text-muted-foreground">Cost: NPR {p.costPrice}</p>}
             </div>
           </div>
         ))}
@@ -94,11 +79,66 @@ const ProductsPage = () => {
 
       {/* Add Button */}
       <div className="px-4 pt-4 pb-4">
-        <button className="w-full bg-primary text-primary-foreground py-3.5 rounded-xl font-semibold text-sm flex items-center justify-center gap-2">
-          <Plus size={18} />
-          Add Product
+        <button onClick={() => setShowForm(true)} className="w-full bg-primary text-primary-foreground py-3.5 rounded-xl font-semibold text-sm flex items-center justify-center gap-2">
+          <Plus size={18} /> Add Product
         </button>
       </div>
+
+      {/* Form Modal */}
+      {showForm && (
+        <div className="fixed inset-0 bg-foreground/50 z-50 flex items-end">
+          <div className="w-full max-w-md mx-auto bg-card rounded-t-2xl p-5 animate-in slide-in-from-bottom max-h-[85vh] overflow-y-auto">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-lg font-bold text-card-foreground">New Product</h2>
+              <button onClick={() => setShowForm(false)}><X size={20} className="text-muted-foreground" /></button>
+            </div>
+            <div className="space-y-3">
+              <input placeholder="Product Name *" className="w-full bg-background border border-border rounded-xl py-3 px-4 text-sm text-card-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring" />
+              <select className="w-full bg-background border border-border rounded-xl py-3 px-4 text-sm text-card-foreground focus:outline-none focus:ring-2 focus:ring-ring">
+                <option>Item</option>
+                <option>Service</option>
+              </select>
+              <select className="w-full bg-background border border-border rounded-xl py-3 px-4 text-sm text-card-foreground focus:outline-none focus:ring-2 focus:ring-ring">
+                <option value="">Select Category</option>
+                <option>Grocery</option>
+                <option>Beverages</option>
+                <option>Food</option>
+                <option>Electronics</option>
+                <option>Services</option>
+              </select>
+              <div className="grid grid-cols-2 gap-3">
+                <input placeholder="Sale Price *" type="number" className="w-full bg-background border border-border rounded-xl py-3 px-4 text-sm text-card-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring" />
+                <input placeholder="Cost Price" type="number" className="w-full bg-background border border-border rounded-xl py-3 px-4 text-sm text-card-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring" />
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <input placeholder="Opening Stock" type="number" className="w-full bg-background border border-border rounded-xl py-3 px-4 text-sm text-card-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring" />
+                <select className="w-full bg-background border border-border rounded-xl py-3 px-4 text-sm text-card-foreground focus:outline-none focus:ring-2 focus:ring-ring">
+                  <option>pcs</option>
+                  <option>kg</option>
+                  <option>bag</option>
+                  <option>bottle</option>
+                  <option>box</option>
+                  <option>litre</option>
+                </select>
+              </div>
+              <input placeholder="Low Stock Alert Level" type="number" className="w-full bg-background border border-border rounded-xl py-3 px-4 text-sm text-card-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring" />
+              <input placeholder="SKU / Barcode" className="w-full bg-background border border-border rounded-xl py-3 px-4 text-sm text-card-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring" />
+              <select className="w-full bg-background border border-border rounded-xl py-3 px-4 text-sm text-card-foreground focus:outline-none focus:ring-2 focus:ring-ring">
+                <option value="">Tax Rate</option>
+                <option>No Tax</option>
+                <option>VAT 13%</option>
+                <option>GST 5%</option>
+                <option>GST 12%</option>
+                <option>GST 18%</option>
+              </select>
+              <textarea placeholder="Description" rows={2} className="w-full bg-background border border-border rounded-xl py-3 px-4 text-sm text-card-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring resize-none" />
+              <button onClick={() => setShowForm(false)} className="w-full bg-primary text-primary-foreground py-3.5 rounded-xl font-semibold text-sm">
+                Save Product
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </AppShell>
   );
 };

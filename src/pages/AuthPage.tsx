@@ -1,10 +1,20 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Eye, EyeOff, Mail, Lock, User, Phone } from "lucide-react";
+import { Eye, EyeOff, Mail, Lock, User, Phone, Globe } from "lucide-react";
+
+const languages = [
+  { code: "en", label: "English" },
+  { code: "ne", label: "नेपाली" },
+  { code: "hi", label: "हिन्दी" },
+  { code: "bn", label: "বাংলা" },
+  { code: "zh", label: "中文" },
+];
 
 const AuthPage = () => {
   const [isLogin, setIsLogin] = useState(true);
   const [showPassword, setShowPassword] = useState(false);
+  const [selectedLang, setSelectedLang] = useState("en");
+  const [showLangPicker, setShowLangPicker] = useState(false);
   const navigate = useNavigate();
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -12,10 +22,40 @@ const AuthPage = () => {
     navigate("/");
   };
 
+  const currentLang = languages.find(l => l.code === selectedLang)?.label || "English";
+
   return (
     <div className="flex flex-col min-h-screen max-w-md mx-auto bg-background">
+      {/* Language Selector */}
+      <div className="flex justify-end px-4 pt-3">
+        <button
+          onClick={() => setShowLangPicker(!showLangPicker)}
+          className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-card border border-border text-xs font-medium text-card-foreground"
+        >
+          <Globe size={14} className="text-primary" />
+          {currentLang}
+        </button>
+        {showLangPicker && (
+          <div className="absolute right-4 top-12 bg-card border border-border rounded-xl shadow-lg z-50 overflow-hidden">
+            {languages.map(lang => (
+              <button
+                key={lang.code}
+                onClick={() => { setSelectedLang(lang.code); setShowLangPicker(false); }}
+                className={`block w-full text-left px-4 py-2.5 text-sm transition-colors ${
+                  selectedLang === lang.code
+                    ? "bg-primary text-primary-foreground font-semibold"
+                    : "text-card-foreground hover:bg-muted"
+                }`}
+              >
+                {lang.label}
+              </button>
+            ))}
+          </div>
+        )}
+      </div>
+
       {/* Header */}
-      <div className="bg-header text-header-foreground px-6 pt-12 pb-10 text-center">
+      <div className="bg-header text-header-foreground px-6 pt-8 pb-10 text-center">
         <div className="w-16 h-16 rounded-2xl bg-primary-foreground/20 flex items-center justify-center mx-auto mb-4">
           <span className="text-2xl font-bold">eL</span>
         </div>
@@ -51,30 +91,22 @@ const AuthPage = () => {
             <div className="space-y-4">
               <div className="relative">
                 <User size={18} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-muted-foreground" />
-                <input
-                  type="text"
-                  placeholder="Full Name"
-                  className="w-full bg-card border border-border rounded-xl py-3.5 pl-11 pr-4 text-sm text-card-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring"
-                />
+                <input type="text" placeholder="Full Name" className="w-full bg-card border border-border rounded-xl py-3.5 pl-11 pr-4 text-sm text-card-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring" />
               </div>
               <div className="relative">
                 <Phone size={18} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-muted-foreground" />
-                <input
-                  type="tel"
-                  placeholder="Phone Number"
-                  className="w-full bg-card border border-border rounded-xl py-3.5 pl-11 pr-4 text-sm text-card-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring"
-                />
+                <input type="tel" placeholder="Phone Number" className="w-full bg-card border border-border rounded-xl py-3.5 pl-11 pr-4 text-sm text-card-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring" />
+              </div>
+              <div className="relative">
+                <Building2 size={18} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-muted-foreground" />
+                <input type="text" placeholder="Business Name" className="w-full bg-card border border-border rounded-xl py-3.5 pl-11 pr-4 text-sm text-card-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring" />
               </div>
             </div>
           )}
 
           <div className="relative">
             <Mail size={18} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-muted-foreground" />
-            <input
-              type="email"
-              placeholder="Email Address"
-              className="w-full bg-card border border-border rounded-xl py-3.5 pl-11 pr-4 text-sm text-card-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring"
-            />
+            <input type="email" placeholder="Email Address" className="w-full bg-card border border-border rounded-xl py-3.5 pl-11 pr-4 text-sm text-card-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring" />
           </div>
 
           <div className="relative">
@@ -84,27 +116,18 @@ const AuthPage = () => {
               placeholder="Password"
               className="w-full bg-card border border-border rounded-xl py-3.5 pl-11 pr-11 text-sm text-card-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring"
             />
-            <button
-              type="button"
-              onClick={() => setShowPassword(!showPassword)}
-              className="absolute right-3.5 top-1/2 -translate-y-1/2 text-muted-foreground"
-            >
+            <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3.5 top-1/2 -translate-y-1/2 text-muted-foreground">
               {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
             </button>
           </div>
 
           {isLogin && (
             <div className="flex justify-end">
-              <button type="button" className="text-sm text-primary font-medium">
-                Forgot Password?
-              </button>
+              <button type="button" className="text-sm text-primary font-medium">Forgot Password?</button>
             </div>
           )}
 
-          <button
-            type="submit"
-            className="w-full bg-primary text-primary-foreground py-3.5 rounded-xl font-semibold text-sm"
-          >
+          <button type="submit" className="w-full bg-primary text-primary-foreground py-3.5 rounded-xl font-semibold text-sm">
             {isLogin ? "Login" : "Create Account"}
           </button>
         </form>
@@ -136,5 +159,11 @@ const AuthPage = () => {
     </div>
   );
 };
+
+const Building2 = ({ size, className }: { size: number; className?: string }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+    <path d="M6 22V4a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v18Z"/><path d="M6 12H4a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h2"/><path d="M18 9h2a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2h-2"/><path d="M10 6h4"/><path d="M10 10h4"/><path d="M10 14h4"/><path d="M10 18h4"/>
+  </svg>
+);
 
 export default AuthPage;

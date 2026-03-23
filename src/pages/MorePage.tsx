@@ -12,25 +12,22 @@ const MorePage = () => {
 
   return (
     <AppShell headerTitle="More">
-      {/* Business Tools */}
       <SectionHeader title="Business Tools" />
       <div className="mx-4 bg-card rounded-xl border border-border overflow-hidden divide-y divide-border">
         <MenuListItem icon={<Package size={18} />} title="Products" subtitle="Product & service catalog" onClick={() => navigate("/products")} />
         <MenuListItem icon={<Warehouse size={18} />} title="Inventory" subtitle="Stock tracking & movements" onClick={() => navigate("/inventory")} />
-        <MenuListItem icon={<ShoppingCart size={18} />} title="POS" subtitle="Point of sale checkout" />
+        <MenuListItem icon={<ShoppingCart size={18} />} title="POS" subtitle="Point of sale checkout" onClick={() => navigate("/pos")} />
         <MenuListItem icon={<FileText size={18} />} title="Billing & Invoice" subtitle="Invoices, receipts, credit notes" />
       </div>
 
-      {/* Management */}
       <SectionHeader title="Management" />
       <div className="mx-4 bg-card rounded-xl border border-border overflow-hidden divide-y divide-border">
         <MenuListItem icon={<Tag size={18} />} title="Categories" subtitle="Income, expense & business categories" onClick={() => navigate("/categories")} />
         <MenuListItem icon={<Wallet size={18} />} title="Accounts" subtitle="Cash, bank, wallet accounts" onClick={() => navigate("/accounts")} />
-        <MenuListItem icon={<Users size={18} />} title="Contacts" subtitle="Customers, suppliers, parties" />
+        <MenuListItem icon={<Users size={18} />} title="Contacts" subtitle="Customers, suppliers, parties" onClick={() => navigate("/contacts")} />
         <MenuListItem icon={<BarChart3 size={18} />} title="Reports" subtitle="Business & financial reports" onClick={() => navigate("/reports")} />
       </div>
 
-      {/* Account */}
       <SectionHeader title="Account" />
       <div className="mx-4 bg-card rounded-xl border border-border overflow-hidden divide-y divide-border mb-4">
         <MenuListItem icon={<User size={18} />} title="Profile" subtitle="Your profile & business info" onClick={() => navigate("/profile")} />

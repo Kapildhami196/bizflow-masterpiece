@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { AppShell } from "@/components/layout/AppShell";
-import { Plus, Tag } from "lucide-react";
+import { Plus, Tag, X } from "lucide-react";
 
 const tabs = ["All", "Income", "Expense", "Business"];
 
@@ -21,26 +21,19 @@ const categories = [
 
 const CategoriesPage = () => {
   const [activeTab, setActiveTab] = useState("All");
+  const [showForm, setShowForm] = useState(false);
   const filtered = activeTab === "All" ? categories : categories.filter(c => c.group === activeTab.toLowerCase());
 
   return (
     <AppShell headerTitle="Categories">
-      {/* Tabs */}
       <div className="flex gap-2 px-4 pt-4 overflow-x-auto">
         {tabs.map(tab => (
-          <button
-            key={tab}
-            onClick={() => setActiveTab(tab)}
-            className={`px-4 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition-colors ${
-              activeTab === tab ? "bg-primary text-primary-foreground" : "bg-card border border-border text-muted-foreground"
-            }`}
-          >
+          <button key={tab} onClick={() => setActiveTab(tab)} className={`px-4 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition-colors ${activeTab === tab ? "bg-primary text-primary-foreground" : "bg-card border border-border text-muted-foreground"}`}>
             {tab}
           </button>
         ))}
       </div>
 
-      {/* Category List */}
       <div className="mx-4 mt-3 bg-card rounded-xl border border-border overflow-hidden divide-y divide-border">
         {filtered.map(c => (
           <div key={c.id} className="flex items-center gap-3 px-4 py-3.5">
@@ -60,13 +53,34 @@ const CategoriesPage = () => {
         ))}
       </div>
 
-      {/* Add Button */}
       <div className="px-4 pt-4 pb-4">
-        <button className="w-full bg-primary text-primary-foreground py-3.5 rounded-xl font-semibold text-sm flex items-center justify-center gap-2">
-          <Plus size={18} />
-          Add Category
+        <button onClick={() => setShowForm(true)} className="w-full bg-primary text-primary-foreground py-3.5 rounded-xl font-semibold text-sm flex items-center justify-center gap-2">
+          <Plus size={18} /> Add Category
         </button>
       </div>
+
+      {showForm && (
+        <div className="fixed inset-0 bg-foreground/50 z-50 flex items-end">
+          <div className="w-full max-w-md mx-auto bg-card rounded-t-2xl p-5 animate-in slide-in-from-bottom">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-lg font-bold text-card-foreground">New Category</h2>
+              <button onClick={() => setShowForm(false)}><X size={20} className="text-muted-foreground" /></button>
+            </div>
+            <div className="space-y-3">
+              <input placeholder="Category Name *" className="w-full bg-background border border-border rounded-xl py-3 px-4 text-sm text-card-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring" />
+              <select className="w-full bg-background border border-border rounded-xl py-3 px-4 text-sm text-card-foreground focus:outline-none focus:ring-2 focus:ring-ring">
+                <option>Income</option>
+                <option>Expense</option>
+                <option>Business</option>
+              </select>
+              <textarea placeholder="Description" rows={2} className="w-full bg-background border border-border rounded-xl py-3 px-4 text-sm text-card-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring resize-none" />
+              <button onClick={() => setShowForm(false)} className="w-full bg-primary text-primary-foreground py-3.5 rounded-xl font-semibold text-sm">
+                Save Category
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </AppShell>
   );
 };

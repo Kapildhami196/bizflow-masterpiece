@@ -1,6 +1,7 @@
+import { useState } from "react";
 import { AppShell } from "@/components/layout/AppShell";
 import { SectionHeader } from "@/components/shared/SectionHeader";
-import { Users, TrendingUp, TrendingDown, AlertCircle, Clock, CheckCircle } from "lucide-react";
+import { Users, TrendingUp, TrendingDown, AlertCircle, Clock, CheckCircle, Plus, X } from "lucide-react";
 
 const partyData = [
   { name: "Ram Kumar", type: "customer", balance: 15000, direction: "receivable" as const },
@@ -11,12 +12,12 @@ const partyData = [
 ];
 
 const LedgerPage = () => {
+  const [showForm, setShowForm] = useState(false);
   const totalReceivable = partyData.filter(p => p.direction === "receivable").reduce((sum, p) => sum + p.balance, 0);
   const totalPayable = partyData.filter(p => p.direction === "payable").reduce((sum, p) => sum + p.balance, 0);
 
   return (
     <AppShell headerTitle="Ledger">
-      {/* Summary Cards */}
       <div className="grid grid-cols-2 gap-3 px-4 pt-4">
         <div className="bg-card rounded-xl border border-border p-4">
           <div className="flex items-center gap-2 mb-2">
@@ -38,7 +39,6 @@ const LedgerPage = () => {
         </div>
       </div>
 
-      {/* Quick Status */}
       <div className="grid grid-cols-3 gap-2 px-4 pt-3">
         <div className="bg-card rounded-lg border border-border p-3 text-center">
           <AlertCircle size={16} className="text-destructive mx-auto mb-1" />
@@ -57,7 +57,6 @@ const LedgerPage = () => {
         </div>
       </div>
 
-      {/* Party List */}
       <SectionHeader title="Parties" actionLabel="View All" />
       <div className="mx-4 bg-card rounded-xl border border-border overflow-hidden divide-y divide-border">
         {partyData.map((party, idx) => (
@@ -73,21 +72,47 @@ const LedgerPage = () => {
               <p className={`text-sm font-semibold ${party.direction === "receivable" ? "text-success" : "text-destructive"}`}>
                 NPR {party.balance.toLocaleString()}
               </p>
-              <p className="text-[10px] text-muted-foreground">
-                {party.direction === "receivable" ? "To Receive" : "To Pay"}
-              </p>
+              <p className="text-[10px] text-muted-foreground">{party.direction === "receivable" ? "To Receive" : "To Pay"}</p>
             </div>
           </div>
         ))}
       </div>
 
-      {/* Add Entry Button */}
       <div className="px-4 pt-4 pb-4">
-        <button className="w-full bg-primary text-primary-foreground py-3.5 rounded-xl font-semibold text-sm flex items-center justify-center gap-2">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/><path d="M12 8v8M8 12h8"/></svg>
-          Add Ledger Entry
+        <button onClick={() => setShowForm(true)} className="w-full bg-primary text-primary-foreground py-3.5 rounded-xl font-semibold text-sm flex items-center justify-center gap-2">
+          <Plus size={18} /> Add Ledger Entry
         </button>
       </div>
+
+      {showForm && (
+        <div className="fixed inset-0 bg-foreground/50 z-50 flex items-end">
+          <div className="w-full max-w-md mx-auto bg-card rounded-t-2xl p-5 animate-in slide-in-from-bottom max-h-[85vh] overflow-y-auto">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-lg font-bold text-card-foreground">New Ledger Entry</h2>
+              <button onClick={() => setShowForm(false)}><X size={20} className="text-muted-foreground" /></button>
+            </div>
+            <div className="space-y-3">
+              <select className="w-full bg-background border border-border rounded-xl py-3 px-4 text-sm text-card-foreground focus:outline-none focus:ring-2 focus:ring-ring">
+                <option value="">Select Party *</option>
+                {partyData.map((p, idx) => <option key={idx}>{p.name}</option>)}
+              </select>
+              <select className="w-full bg-background border border-border rounded-xl py-3 px-4 text-sm text-card-foreground focus:outline-none focus:ring-2 focus:ring-ring">
+                <option>Sale (Receivable)</option>
+                <option>Purchase (Payable)</option>
+                <option>Payment Received</option>
+                <option>Payment Made</option>
+              </select>
+              <input placeholder="Amount (NPR) *" type="number" className="w-full bg-background border border-border rounded-xl py-3 px-4 text-sm text-card-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring" />
+              <input type="date" className="w-full bg-background border border-border rounded-xl py-3 px-4 text-sm text-card-foreground focus:outline-none focus:ring-2 focus:ring-ring" />
+              <input placeholder="Due Date" type="date" className="w-full bg-background border border-border rounded-xl py-3 px-4 text-sm text-card-foreground focus:outline-none focus:ring-2 focus:ring-ring" />
+              <textarea placeholder="Remarks" rows={2} className="w-full bg-background border border-border rounded-xl py-3 px-4 text-sm text-card-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring resize-none" />
+              <button onClick={() => setShowForm(false)} className="w-full bg-primary text-primary-foreground py-3.5 rounded-xl font-semibold text-sm">
+                Save Entry
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </AppShell>
   );
 };

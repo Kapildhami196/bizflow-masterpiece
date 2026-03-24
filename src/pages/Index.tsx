@@ -1,4 +1,4 @@
-import { Bell, Plus, ArrowUpRight, ArrowDownLeft, Wallet, TrendingUp, TrendingDown, AlertCircle } from "lucide-react";
+import { Bell, ArrowUpRight, ArrowDownLeft, TrendingUp, TrendingDown, AlertCircle, Package, FileText, Users, Wallet } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { BottomNav } from "@/components/layout/BottomNav";
 import { QuickActionCard } from "@/components/shared/QuickActionCard";
@@ -83,16 +83,19 @@ const HomePage = () => {
         <SectionHeader title="Quick Actions" />
         <div className="px-4 grid grid-cols-4 gap-3">
           <QuickActionCard
-            icon={<Plus size={22} />}
-            label="Add Sale"
+            icon={<Package size={22} />}
+            label="Products"
+            onClick={() => navigate("/products")}
           />
           <QuickActionCard
-            icon={<ArrowDownLeft size={22} />}
-            label="Collection"
+            icon={<FileText size={22} />}
+            label="Billing"
+            onClick={() => navigate("/billing")}
           />
           <QuickActionCard
-            icon={<ArrowUpRight size={22} />}
-            label="Payment"
+            icon={<Users size={22} />}
+            label="Contacts"
+            onClick={() => navigate("/contacts")}
           />
           <QuickActionCard
             icon={<Wallet size={22} />}

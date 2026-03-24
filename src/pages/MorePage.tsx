@@ -17,7 +17,7 @@ const MorePage = () => {
         <MenuListItem icon={<Package size={18} />} title="Products" subtitle="Product & service catalog" onClick={() => navigate("/products")} />
         <MenuListItem icon={<Warehouse size={18} />} title="Inventory" subtitle="Stock tracking & movements" onClick={() => navigate("/inventory")} />
         <MenuListItem icon={<ShoppingCart size={18} />} title="POS" subtitle="Point of sale checkout" onClick={() => navigate("/pos")} />
-        <MenuListItem icon={<FileText size={18} />} title="Billing & Invoice" subtitle="Invoices, receipts, credit notes" />
+        <MenuListItem icon={<FileText size={18} />} title="Billing & Invoice" subtitle="Invoices, receipts, credit notes" onClick={() => navigate("/billing")} />
       </div>
 
       <SectionHeader title="Management" />

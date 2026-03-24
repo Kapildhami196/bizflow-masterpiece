@@ -18,6 +18,7 @@ import CategoriesPage from "./pages/CategoriesPage";
 import SettingsPage from "./pages/SettingsPage";
 import PosPage from "./pages/PosPage";
 import ContactsPage from "./pages/ContactsPage";
+import BillingPage from "./pages/BillingPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();

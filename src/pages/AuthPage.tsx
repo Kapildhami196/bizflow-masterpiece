@@ -19,7 +19,7 @@ const AuthPage = () => {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    navigate("/");
+    navigate("/account-setup");
   };
 
   const currentLang = languages.find(l => l.code === selectedLang)?.label || "English";
@@ -97,10 +97,6 @@ const AuthPage = () => {
                 <Phone size={18} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-muted-foreground" />
                 <input type="tel" placeholder="Phone Number" className="w-full bg-card border border-border rounded-xl py-3.5 pl-11 pr-4 text-sm text-card-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring" />
               </div>
-              <div className="relative">
-                <Building2 size={18} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-muted-foreground" />
-                <input type="text" placeholder="Business Name" className="w-full bg-card border border-border rounded-xl py-3.5 pl-11 pr-4 text-sm text-card-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring" />
-              </div>
             </div>
           )}
 
@@ -159,11 +155,5 @@ const AuthPage = () => {
     </div>
   );
 };
-
-const Building2 = ({ size, className }: { size: number; className?: string }) => (
-  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
-    <path d="M6 22V4a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v18Z"/><path d="M6 12H4a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h2"/><path d="M18 9h2a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2h-2"/><path d="M10 6h4"/><path d="M10 10h4"/><path d="M10 14h4"/><path d="M10 18h4"/>
-  </svg>
-);
 
 export default AuthPage;

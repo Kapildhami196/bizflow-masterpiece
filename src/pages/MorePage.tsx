@@ -4,7 +4,7 @@ import { MenuListItem } from "@/components/shared/MenuListItem";
 import { SectionHeader } from "@/components/shared/SectionHeader";
 import {
   Package, Warehouse, BarChart3, Tag, Wallet,
-  Users, Settings, ShoppingCart, FileText, User, CreditCard,
+  Users, Settings, ShoppingCart, FileText, User, CreditCard, ArrowLeftRight, BookOpen,
 } from "lucide-react";
 
 const MorePage = () => {
@@ -14,6 +14,8 @@ const MorePage = () => {
     <AppShell headerTitle="More">
       <SectionHeader title="Business Tools" />
       <div className="mx-4 bg-card rounded-xl border border-border overflow-hidden divide-y divide-border">
+        <MenuListItem icon={<ArrowLeftRight size={18} />} title="Transactions" subtitle="Income, expense & transfers" onClick={() => navigate("/transactions")} />
+        <MenuListItem icon={<BookOpen size={18} />} title="Ledger" subtitle="Payables & receivables ledger" onClick={() => navigate("/ledger")} />
         <MenuListItem icon={<Package size={18} />} title="Products" subtitle="Product & service catalog" onClick={() => navigate("/products")} />
         <MenuListItem icon={<Warehouse size={18} />} title="Inventory" subtitle="Stock tracking & movements" onClick={() => navigate("/inventory")} />
         <MenuListItem icon={<ShoppingCart size={18} />} title="POS" subtitle="Point of sale checkout" onClick={() => navigate("/pos")} />

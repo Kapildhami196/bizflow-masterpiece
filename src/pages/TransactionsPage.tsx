@@ -4,7 +4,7 @@ import { ArrowDownLeft, ArrowUpRight, Filter, Search, Plus, X } from "lucide-rea
 
 const tabs = ["All", "Income", "Expense", "Transfer"];
 
-const transactions = [
+const initialTransactions = [
   { id: 1, name: "Sale - Ram Kumar", amount: "15,000", type: "income" as const, date: "22 Mar, 2026", category: "Sale", account: "Cash" },
   { id: 2, name: "Electricity Bill", amount: "2,500", type: "expense" as const, date: "22 Mar, 2026", category: "Utilities", account: "Bank" },
   { id: 3, name: "Purchase - Pokhara Traders", amount: "12,000", type: "expense" as const, date: "21 Mar, 2026", category: "Purchase", account: "Bank" },
@@ -18,6 +18,16 @@ const TransactionsPage = () => {
   const [activeTab, setActiveTab] = useState("All");
   const [showForm, setShowForm] = useState(false);
   const [formType, setFormType] = useState<"income" | "expense" | "transfer">("income");
+  const [transactions, setTransactions] = useState(initialTransactions);
+  const [editingItem, setEditingItem] = useState<typeof initialTransactions[0] | null>(null);
+
+  // Form fields
+  const [formName, setFormName] = useState("");
+  const [formAmount, setFormAmount] = useState("");
+  const [formCategory, setFormCategory] = useState("");
+  const [formAccount, setFormAccount] = useState("");
+  const [formDate, setFormDate] = useState("");
+  const [formNote, setFormNote] = useState("");
 
   const filtered = activeTab === "All" ? transactions : transactions.filter(t => t.type === activeTab.toLowerCase());
   const totalIn = transactions.filter(t => t.type === "income").reduce((s, t) => s + parseInt(t.amount.replace(/,/g, "")), 0);
@@ -25,7 +35,43 @@ const TransactionsPage = () => {
 
   const openForm = (type: "income" | "expense" | "transfer") => {
     setFormType(type);
+    setEditingItem(null);
+    setFormName(""); setFormAmount(""); setFormCategory(""); setFormAccount(""); setFormDate(""); setFormNote("");
     setShowForm(true);
+  };
+
+  const openEdit = (item: typeof initialTransactions[0]) => {
+    setEditingItem(item);
+    setFormType(item.type);
+    setFormName(item.name);
+    setFormAmount(item.amount.replace(/,/g, ""));
+    setFormCategory(item.category);
+    setFormAccount(item.account);
+    setFormDate("");
+    setFormNote("");
+    setShowForm(true);
+  };
+
+  const handleSave = () => {
+    if (editingItem) {
+      setTransactions(prev => prev.map(t => t.id === editingItem.id ? {
+        ...t,
+        name: formName || t.name,
+        amount: formAmount ? parseInt(formAmount).toLocaleString() : t.amount,
+        category: formCategory || t.category,
+        account: formAccount || t.account,
+      } : t));
+    }
+    setShowForm(false);
+    setEditingItem(null);
+  };
+
+  const handleDelete = () => {
+    if (editingItem) {
+      setTransactions(prev => prev.filter(t => t.id !== editingItem.id));
+    }
+    setShowForm(false);
+    setEditingItem(null);
   };
 
   return (
@@ -75,7 +121,7 @@ const TransactionsPage = () => {
       {/* Transaction List */}
       <div className="mx-4 mt-3 bg-card rounded-xl border border-border overflow-hidden divide-y divide-border">
         {filtered.map(t => (
-          <div key={t.id} className="flex items-center gap-3 px-4 py-3.5">
+          <button key={t.id} onClick={() => openEdit(t)} className="flex items-center gap-3 px-4 py-3.5 w-full text-left hover:bg-muted/50 transition-colors">
             <div className={`w-9 h-9 rounded-full flex items-center justify-center shrink-0 ${t.type === "income" ? "bg-success/15" : t.type === "expense" ? "bg-destructive/15" : "bg-accent"}`}>
               {t.type === "income" ? <ArrowDownLeft size={16} className="text-success" /> : t.type === "expense" ? <ArrowUpRight size={16} className="text-destructive" /> : <ArrowUpRight size={16} className="text-primary" />}
             </div>
@@ -86,7 +132,7 @@ const TransactionsPage = () => {
             <p className={`text-sm font-semibold ${t.type === "income" ? "text-success" : t.type === "expense" ? "text-destructive" : "text-primary"}`}>
               {t.type === "income" ? "+" : t.type === "expense" ? "-" : ""}NPR {t.amount}
             </p>
-          </div>
+          </button>
         ))}
       </div>
 
@@ -108,18 +154,19 @@ const TransactionsPage = () => {
         <div className="fixed inset-0 bg-foreground/50 z-50 flex items-end">
           <div className="w-full max-w-md mx-auto bg-card rounded-t-2xl p-5 animate-in slide-in-from-bottom max-h-[85vh] overflow-y-auto">
             <div className="flex items-center justify-between mb-4">
-              <h2 className="text-lg font-bold text-card-foreground capitalize">New {formType}</h2>
-              <button onClick={() => setShowForm(false)}><X size={20} className="text-muted-foreground" /></button>
+              <h2 className="text-lg font-bold text-card-foreground capitalize">{editingItem ? "Edit" : "New"} {formType}</h2>
+              <button onClick={() => { setShowForm(false); setEditingItem(null); }}><X size={20} className="text-muted-foreground" /></button>
             </div>
             <div className="space-y-3">
-              <input placeholder="Amount (NPR) *" type="number" className="w-full bg-background border border-border rounded-xl py-3 px-4 text-sm text-card-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring" />
-              <select className="w-full bg-background border border-border rounded-xl py-3 px-4 text-sm text-card-foreground focus:outline-none focus:ring-2 focus:ring-ring">
+              <input value={formName} onChange={e => setFormName(e.target.value)} placeholder="Party / Description *" className="w-full bg-background border border-border rounded-xl py-3 px-4 text-sm text-card-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring" />
+              <input value={formAmount} onChange={e => setFormAmount(e.target.value)} placeholder="Amount (NPR) *" type="number" className="w-full bg-background border border-border rounded-xl py-3 px-4 text-sm text-card-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring" />
+              <select value={formCategory} onChange={e => setFormCategory(e.target.value)} className="w-full bg-background border border-border rounded-xl py-3 px-4 text-sm text-card-foreground focus:outline-none focus:ring-2 focus:ring-ring">
                 <option value="">Select Category</option>
                 {formType === "income" && <><option>Sale</option><option>Collection</option><option>Rent</option><option>Other Income</option></>}
                 {formType === "expense" && <><option>Purchase</option><option>Utilities</option><option>Salary</option><option>Rent</option><option>Transport</option><option>Other Expense</option></>}
                 {formType === "transfer" && <option>Fund Transfer</option>}
               </select>
-              <select className="w-full bg-background border border-border rounded-xl py-3 px-4 text-sm text-card-foreground focus:outline-none focus:ring-2 focus:ring-ring">
+              <select value={formAccount} onChange={e => setFormAccount(e.target.value)} className="w-full bg-background border border-border rounded-xl py-3 px-4 text-sm text-card-foreground focus:outline-none focus:ring-2 focus:ring-ring">
                 <option value="">{formType === "transfer" ? "From Account" : "Account"}</option>
                 <option>Cash in Hand</option>
                 <option>Business Bank</option>
@@ -135,12 +182,16 @@ const TransactionsPage = () => {
                   <option>Khalti</option>
                 </select>
               )}
-              <input placeholder="Party / Contact Name" className="w-full bg-background border border-border rounded-xl py-3 px-4 text-sm text-card-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring" />
-              <input type="date" className="w-full bg-background border border-border rounded-xl py-3 px-4 text-sm text-card-foreground focus:outline-none focus:ring-2 focus:ring-ring" />
-              <textarea placeholder="Note / Description" rows={2} className="w-full bg-background border border-border rounded-xl py-3 px-4 text-sm text-card-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring resize-none" />
-              <button onClick={() => setShowForm(false)} className="w-full bg-primary text-primary-foreground py-3.5 rounded-xl font-semibold text-sm">
-                Save Transaction
+              <input value={formDate} onChange={e => setFormDate(e.target.value)} type="date" className="w-full bg-background border border-border rounded-xl py-3 px-4 text-sm text-card-foreground focus:outline-none focus:ring-2 focus:ring-ring" />
+              <textarea value={formNote} onChange={e => setFormNote(e.target.value)} placeholder="Note / Description" rows={2} className="w-full bg-background border border-border rounded-xl py-3 px-4 text-sm text-card-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring resize-none" />
+              <button onClick={handleSave} className="w-full bg-primary text-primary-foreground py-3.5 rounded-xl font-semibold text-sm">
+                {editingItem ? "Update Transaction" : "Save Transaction"}
               </button>
+              {editingItem && (
+                <button onClick={handleDelete} className="w-full border border-destructive text-destructive py-3 rounded-xl font-semibold text-sm">
+                  Delete Transaction
+                </button>
+              )}
             </div>
           </div>
         </div>

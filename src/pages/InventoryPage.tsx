@@ -3,13 +3,13 @@ import { AppShell } from "@/components/layout/AppShell";
 import { SectionHeader } from "@/components/shared/SectionHeader";
 import { Package, AlertTriangle, ArrowDownLeft, ArrowUpRight, RotateCcw, X } from "lucide-react";
 
-const stockItems = [
-  { name: "Basmati Rice (25kg)", stock: 45, unit: "bag", value: 94500, status: "ok" as const },
-  { name: "Cooking Oil (5L)", stock: 30, unit: "bottle", value: 21600, status: "ok" as const },
-  { name: "Sugar (1kg)", stock: 120, unit: "kg", value: 9360, status: "ok" as const },
-  { name: "Flour (10kg)", stock: 3, unit: "bag", value: 1350, status: "low" as const },
-  { name: "Salt (1kg)", stock: 2, unit: "kg", value: 60, status: "low" as const },
-  { name: "Dal (1kg)", stock: 65, unit: "kg", value: 7800, status: "ok" as const },
+const initialStock = [
+  { id: 1, name: "Basmati Rice (25kg)", stock: 45, unit: "bag", value: 94500, status: "ok" as const },
+  { id: 2, name: "Cooking Oil (5L)", stock: 30, unit: "bottle", value: 21600, status: "ok" as const },
+  { id: 3, name: "Sugar (1kg)", stock: 120, unit: "kg", value: 9360, status: "ok" as const },
+  { id: 4, name: "Flour (10kg)", stock: 3, unit: "bag", value: 1350, status: "low" as const },
+  { id: 5, name: "Salt (1kg)", stock: 2, unit: "kg", value: 60, status: "low" as const },
+  { id: 6, name: "Dal (1kg)", stock: 65, unit: "kg", value: 7800, status: "ok" as const },
 ];
 
 const recentMovements = [
@@ -21,9 +21,56 @@ const recentMovements = [
 
 const InventoryPage = () => {
   const [showForm, setShowForm] = useState(false);
-  const [formType, setFormType] = useState<"in" | "adjust">("in");
+  const [formType, setFormType] = useState<"in" | "adjust" | "edit">("in");
+  const [stockItems, setStockItems] = useState(initialStock);
+  const [editingItem, setEditingItem] = useState<typeof initialStock[0] | null>(null);
+
+  // Form fields
+  const [fName, setFName] = useState("");
+  const [fStock, setFStock] = useState("");
+  const [fUnit, setFUnit] = useState("");
+  const [fRate, setFRate] = useState("");
+  const [fDate, setFDate] = useState("");
+  const [fRemarks, setFRemarks] = useState("");
+
   const totalValue = stockItems.reduce((s, i) => s + i.value, 0);
   const lowStockCount = stockItems.filter(i => i.status === "low").length;
+
+  const openEdit = (item: typeof initialStock[0]) => {
+    setEditingItem(item);
+    setFormType("edit");
+    setFName(item.name); setFStock(item.stock.toString()); setFUnit(item.unit); setFRate((item.value / item.stock).toFixed(0));
+    setFDate(""); setFRemarks("");
+    setShowForm(true);
+  };
+
+  const openStockForm = (type: "in" | "adjust") => {
+    setEditingItem(null);
+    setFormType(type);
+    setFName(""); setFStock(""); setFUnit(""); setFRate(""); setFDate(""); setFRemarks("");
+    setShowForm(true);
+  };
+
+  const handleSave = () => {
+    if (editingItem && formType === "edit") {
+      setStockItems(prev => prev.map(i => i.id === editingItem.id ? {
+        ...i,
+        name: fName || i.name,
+        stock: fStock ? parseInt(fStock) : i.stock,
+        unit: fUnit || i.unit,
+        value: fStock && fRate ? parseInt(fStock) * parseInt(fRate) : i.value,
+        status: (fStock ? parseInt(fStock) : i.stock) <= 5 ? "low" as const : "ok" as const,
+      } : i));
+    }
+    setShowForm(false);
+    setEditingItem(null);
+  };
+
+  const handleDelete = () => {
+    if (editingItem) setStockItems(prev => prev.filter(i => i.id !== editingItem.id));
+    setShowForm(false);
+    setEditingItem(null);
+  };
 
   return (
     <AppShell headerTitle="Inventory">
@@ -56,8 +103,8 @@ const InventoryPage = () => {
 
       <SectionHeader title="Stock on Hand" actionLabel="View All" />
       <div className="mx-4 bg-card rounded-xl border border-border overflow-hidden divide-y divide-border">
-        {stockItems.map((item, idx) => (
-          <div key={idx} className="flex items-center gap-3 px-4 py-3.5">
+        {stockItems.map((item) => (
+          <button key={item.id} onClick={() => openEdit(item)} className="flex items-center gap-3 px-4 py-3.5 w-full text-left hover:bg-muted/50 transition-colors">
             <div className={`w-10 h-10 rounded-lg flex items-center justify-center shrink-0 ${item.status === "low" ? "bg-warning/15" : "bg-accent"}`}>
               <Package size={18} className={item.status === "low" ? "text-warning" : "text-primary"} />
             </div>
@@ -69,7 +116,7 @@ const InventoryPage = () => {
               </p>
             </div>
             <p className="text-sm font-semibold text-card-foreground">NPR {item.value.toLocaleString()}</p>
-          </div>
+          </button>
         ))}
       </div>
 
@@ -90,43 +137,56 @@ const InventoryPage = () => {
       </div>
 
       <div className="px-4 pb-4 grid grid-cols-2 gap-3">
-        <button onClick={() => { setFormType("in"); setShowForm(true); }} className="bg-primary text-primary-foreground py-3 rounded-xl font-semibold text-sm flex items-center justify-center gap-2">
+        <button onClick={() => openStockForm("in")} className="bg-primary text-primary-foreground py-3 rounded-xl font-semibold text-sm flex items-center justify-center gap-2">
           <ArrowDownLeft size={16} /> Stock In
         </button>
-        <button onClick={() => { setFormType("adjust"); setShowForm(true); }} className="border-2 border-primary text-primary py-3 rounded-xl font-semibold text-sm flex items-center justify-center gap-2">
+        <button onClick={() => openStockForm("adjust")} className="border-2 border-primary text-primary py-3 rounded-xl font-semibold text-sm flex items-center justify-center gap-2">
           <RotateCcw size={16} /> Adjust
         </button>
       </div>
 
       {showForm && (
         <div className="fixed inset-0 bg-foreground/50 z-50 flex items-end">
-          <div className="w-full max-w-md mx-auto bg-card rounded-t-2xl p-5 animate-in slide-in-from-bottom">
+          <div className="w-full max-w-md mx-auto bg-card rounded-t-2xl p-5 animate-in slide-in-from-bottom max-h-[85vh] overflow-y-auto">
             <div className="flex items-center justify-between mb-4">
-              <h2 className="text-lg font-bold text-card-foreground">{formType === "in" ? "Stock In" : "Stock Adjustment"}</h2>
-              <button onClick={() => setShowForm(false)}><X size={20} className="text-muted-foreground" /></button>
+              <h2 className="text-lg font-bold text-card-foreground">
+                {formType === "edit" ? "Edit Item" : formType === "in" ? "Stock In" : "Stock Adjustment"}
+              </h2>
+              <button onClick={() => { setShowForm(false); setEditingItem(null); }}><X size={20} className="text-muted-foreground" /></button>
             </div>
             <div className="space-y-3">
-              <select className="w-full bg-background border border-border rounded-xl py-3 px-4 text-sm text-card-foreground focus:outline-none focus:ring-2 focus:ring-ring">
-                <option value="">Select Product *</option>
-                {stockItems.map((item, idx) => <option key={idx}>{item.name}</option>)}
-              </select>
-              <div className="grid grid-cols-2 gap-3">
-                <input placeholder="Quantity *" type="number" className="w-full bg-background border border-border rounded-xl py-3 px-4 text-sm text-card-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring" />
-                <input placeholder="Rate (NPR)" type="number" className="w-full bg-background border border-border rounded-xl py-3 px-4 text-sm text-card-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring" />
-              </div>
-              {formType === "adjust" && (
-                <select className="w-full bg-background border border-border rounded-xl py-3 px-4 text-sm text-card-foreground focus:outline-none focus:ring-2 focus:ring-ring">
-                  <option>Damage</option>
-                  <option>Lost</option>
-                  <option>Return</option>
-                  <option>Correction</option>
-                </select>
+              {formType === "edit" ? (
+                <>
+                  <input value={fName} onChange={e => setFName(e.target.value)} placeholder="Product Name *" className="w-full bg-background border border-border rounded-xl py-3 px-4 text-sm text-card-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring" />
+                  <div className="grid grid-cols-2 gap-3">
+                    <input value={fStock} onChange={e => setFStock(e.target.value)} placeholder="Stock Qty *" type="number" className="w-full bg-background border border-border rounded-xl py-3 px-4 text-sm text-card-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring" />
+                    <input value={fUnit} onChange={e => setFUnit(e.target.value)} placeholder="Unit (kg, bag..)" className="w-full bg-background border border-border rounded-xl py-3 px-4 text-sm text-card-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring" />
+                  </div>
+                  <input value={fRate} onChange={e => setFRate(e.target.value)} placeholder="Rate per unit (NPR)" type="number" className="w-full bg-background border border-border rounded-xl py-3 px-4 text-sm text-card-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring" />
+                  <textarea value={fRemarks} onChange={e => setFRemarks(e.target.value)} placeholder="Remarks" rows={2} className="w-full bg-background border border-border rounded-xl py-3 px-4 text-sm text-card-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring resize-none" />
+                  <button onClick={handleSave} className="w-full bg-primary text-primary-foreground py-3.5 rounded-xl font-semibold text-sm">Update Item</button>
+                  <button onClick={handleDelete} className="w-full border border-destructive text-destructive py-3 rounded-xl font-semibold text-sm">Delete Item</button>
+                </>
+              ) : (
+                <>
+                  <select className="w-full bg-background border border-border rounded-xl py-3 px-4 text-sm text-card-foreground focus:outline-none focus:ring-2 focus:ring-ring">
+                    <option value="">Select Product *</option>
+                    {stockItems.map((item) => <option key={item.id}>{item.name}</option>)}
+                  </select>
+                  <div className="grid grid-cols-2 gap-3">
+                    <input placeholder="Quantity *" type="number" className="w-full bg-background border border-border rounded-xl py-3 px-4 text-sm text-card-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring" />
+                    <input placeholder="Rate (NPR)" type="number" className="w-full bg-background border border-border rounded-xl py-3 px-4 text-sm text-card-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring" />
+                  </div>
+                  {formType === "adjust" && (
+                    <select className="w-full bg-background border border-border rounded-xl py-3 px-4 text-sm text-card-foreground focus:outline-none focus:ring-2 focus:ring-ring">
+                      <option>Damage</option><option>Lost</option><option>Return</option><option>Correction</option>
+                    </select>
+                  )}
+                  <input type="date" className="w-full bg-background border border-border rounded-xl py-3 px-4 text-sm text-card-foreground focus:outline-none focus:ring-2 focus:ring-ring" />
+                  <textarea placeholder="Remarks" rows={2} className="w-full bg-background border border-border rounded-xl py-3 px-4 text-sm text-card-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring resize-none" />
+                  <button onClick={() => setShowForm(false)} className="w-full bg-primary text-primary-foreground py-3.5 rounded-xl font-semibold text-sm">Save</button>
+                </>
               )}
-              <input type="date" className="w-full bg-background border border-border rounded-xl py-3 px-4 text-sm text-card-foreground focus:outline-none focus:ring-2 focus:ring-ring" />
-              <textarea placeholder="Remarks" rows={2} className="w-full bg-background border border-border rounded-xl py-3 px-4 text-sm text-card-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring resize-none" />
-              <button onClick={() => setShowForm(false)} className="w-full bg-primary text-primary-foreground py-3.5 rounded-xl font-semibold text-sm">
-                Save
-              </button>
             </div>
           </div>
         </div>

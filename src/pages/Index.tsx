@@ -1,4 +1,4 @@
-import { Bell, ArrowUpRight, ArrowDownLeft, TrendingUp, TrendingDown, AlertCircle, Package, FileText, Users, Wallet } from "lucide-react";
+import { Bell, ArrowUpRight, ArrowDownLeft, TrendingUp, TrendingDown, AlertCircle, Package, FileText, Users, ArrowLeftRight } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { BottomNav } from "@/components/layout/BottomNav";
 import { QuickActionCard } from "@/components/shared/QuickActionCard";
@@ -98,9 +98,9 @@ const HomePage = () => {
             onClick={() => navigate("/contacts")}
           />
           <QuickActionCard
-            icon={<Wallet size={22} />}
-            label="Accounts"
-            onClick={() => navigate("/accounts")}
+            icon={<ArrowLeftRight size={22} />}
+            label="Txns"
+            onClick={() => navigate("/transactions")}
           />
         </div>
 
@@ -141,7 +141,7 @@ const HomePage = () => {
             { name: "Collection - Hari Bahadur", amount: "3,200", type: "in", date: "Yesterday", category: "Collection" },
             { name: "Expense - Electricity", amount: "2,500", type: "out", date: "Yesterday", category: "Expense" },
           ].map((item, idx) => (
-            <div key={idx} className="flex items-center gap-3 px-4 py-3.5">
+            <button key={idx} onClick={() => navigate("/transactions")} className="flex items-center gap-3 px-4 py-3.5 w-full text-left hover:bg-muted/50 transition-colors">
               <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 ${
                 item.type === "in" ? "bg-success/15" : "bg-destructive/15"
               }`}>
@@ -158,7 +158,7 @@ const HomePage = () => {
               <p className={`text-sm font-semibold ${item.type === "in" ? "text-success" : "text-destructive"}`}>
                 {item.type === "in" ? "+" : "-"} ₹{item.amount}
               </p>
-            </div>
+            </button>
           ))}
         </div>
       </main>

@@ -1,11 +1,11 @@
 import { useLocation, useNavigate } from "react-router-dom";
-import { Home, BookOpen, ArrowLeftRight, ShoppingCart, MoreHorizontal } from "lucide-react";
+import { Home, BookOpen, CreditCard, ShoppingCart, MoreHorizontal } from "lucide-react";
 
 const navItems = [
   { path: "/", icon: Home, label: "Home" },
   { path: "/ledger", icon: BookOpen, label: "Ledger" },
   { path: "/pos", icon: ShoppingCart, label: "POS", isCenter: true },
-  { path: "/transactions", icon: ArrowLeftRight, label: "Txns" },
+  { path: "/emi-loans", icon: CreditCard, label: "EMI" },
   { path: "/more", icon: MoreHorizontal, label: "More" },
 ];
 

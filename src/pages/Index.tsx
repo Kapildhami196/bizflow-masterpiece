@@ -1,4 +1,4 @@
-import { Bell, ArrowUpRight, ArrowDownLeft, TrendingUp, TrendingDown, AlertCircle, Package, FileText, Users, Wallet } from "lucide-react";
+import { Bell, ArrowUpRight, ArrowDownLeft, TrendingUp, TrendingDown, AlertCircle, Package, FileText, Users, ArrowLeftRight } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { BottomNav } from "@/components/layout/BottomNav";
 import { QuickActionCard } from "@/components/shared/QuickActionCard";
@@ -98,9 +98,9 @@ const HomePage = () => {
             onClick={() => navigate("/contacts")}
           />
           <QuickActionCard
-            icon={<Wallet size={22} />}
-            label="Accounts"
-            onClick={() => navigate("/accounts")}
+            icon={<ArrowLeftRight size={22} />}
+            label="Txns"
+            onClick={() => navigate("/transactions")}
           />
         </div>
 

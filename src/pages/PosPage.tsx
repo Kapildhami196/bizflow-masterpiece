@@ -1,6 +1,7 @@
-import { useState } from "react";
+import { useState, useRef, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { Search, Plus, Minus, Trash2, ShoppingCart, ChevronDown, X, Percent, MoreHorizontal } from "lucide-react";
+import { toast } from "sonner";
 
 interface CartItem {
   id: number;
@@ -24,6 +25,10 @@ const initialProducts = [
   { id: 10, name: "Home Delivery", price: 100, category: "Services" },
   { id: 11, name: "Salt (1kg)", price: 30, category: "Grocery" },
   { id: 12, name: "Flour (10kg)", price: 550, category: "Grocery" },
+  { id: 13, name: "Noodles (Pack)", price: 35, category: "Food" },
+  { id: 14, name: "Juice (1L)", price: 120, category: "Beverages" },
+  { id: 15, name: "Biscuits", price: 50, category: "Food" },
+  { id: 16, name: "Soap (Pack)", price: 85, category: "Grocery" },
 ];
 
 const PosPage = () => {
@@ -40,6 +45,8 @@ const PosPage = () => {
   const [eName, setEName] = useState("");
   const [ePrice, setEPrice] = useState("");
   const [eCategory, setECategory] = useState("");
+  const longPressTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const longPressTriggered = useRef(false);
 
   const filtered = products.filter(p => {
     const matchSearch = p.name.toLowerCase().includes(search.toLowerCase());
@@ -55,6 +62,50 @@ const PosPage = () => {
     });
   };
 
+  const removeOneFromCart = (productId: number) => {
+    setCart(prev => {
+      const existing = prev.find(i => i.id === productId);
+      if (!existing) return prev;
+      if (existing.qty <= 1) return prev.filter(i => i.id !== productId);
+      return prev.map(i => i.id === productId ? { ...i, qty: i.qty - 1 } : i);
+    });
+  };
+
+  const getCartQty = (productId: number) => {
+    return cart.find(i => i.id === productId)?.qty || 0;
+  };
+
+  const handleLongPressStart = useCallback((product: typeof initialProducts[0]) => {
+    longPressTriggered.current = false;
+    longPressTimer.current = setTimeout(() => {
+      longPressTriggered.current = true;
+      const qty = getCartQty(product.id);
+      if (qty > 0) {
+        removeOneFromCart(product.id);
+        toast(`Removed 1x ${product.name}`, { description: `Qty: ${qty - 1}`, duration: 1500 });
+      } else {
+        addToCart(product);
+        toast(`Added 1x ${product.name}`, { description: `Qty: 1`, duration: 1500 });
+      }
+    }, 500);
+  }, [cart]);
+
+  const handleLongPressEnd = useCallback(() => {
+    if (longPressTimer.current) {
+      clearTimeout(longPressTimer.current);
+      longPressTimer.current = null;
+    }
+  }, []);
+
+  const handleProductClick = (product: typeof initialProducts[0]) => {
+    if (longPressTriggered.current) {
+      longPressTriggered.current = false;
+      return;
+    }
+    addToCart(product);
+    toast(`Added ${product.name}`, { duration: 1200 });
+  };
+
   const handleDoubleClick = (product: typeof initialProducts[0]) => {
     setEditingProduct(product);
     setEName(product.name);
@@ -66,16 +117,10 @@ const PosPage = () => {
   const handleEditSave = () => {
     if (editingProduct) {
       setProducts(prev => prev.map(p => p.id === editingProduct.id ? {
-        ...p,
-        name: eName || p.name,
-        price: ePrice ? parseInt(ePrice) : p.price,
-        category: eCategory || p.category,
+        ...p, name: eName || p.name, price: ePrice ? parseInt(ePrice) : p.price, category: eCategory || p.category,
       } : p));
-      // Update cart if item is there
       setCart(prev => prev.map(i => i.id === editingProduct.id ? {
-        ...i,
-        name: eName || i.name,
-        price: ePrice ? parseInt(ePrice) : i.price,
+        ...i, name: eName || i.name, price: ePrice ? parseInt(ePrice) : i.price,
       } : i));
     }
     setShowEditModal(false);
@@ -147,23 +192,44 @@ const PosPage = () => {
           ))}
         </div>
 
-        {/* Product Grid - single tap adds to cart, double tap edits */}
-        <p className="px-4 pt-3 text-[10px] text-muted-foreground">Tap to add • Double-tap to edit</p>
-        <div className="grid grid-cols-3 gap-2 px-4 pt-1">
-          {filtered.map(p => (
-            <button
-              key={p.id}
-              onClick={() => addToCart(p)}
-              onDoubleClick={(e) => { e.preventDefault(); handleDoubleClick(p); }}
-              className="bg-card border border-border rounded-xl p-3 text-center hover:border-primary/40 transition-colors"
-            >
-              <div className="w-full aspect-square rounded-lg bg-accent flex items-center justify-center mb-2">
-                <span className="text-xl font-bold text-primary">{p.name[0]}</span>
+        {/* Product Grid Card - 4 per row, scrollable, 16 products */}
+        <div className="px-4 pt-3">
+          <div className="flex items-center justify-between mb-2">
+            <p className="text-[10px] text-muted-foreground">Tap to add • Hold to quick remove • Double-tap to edit</p>
+          </div>
+          <div className="bg-card border border-border rounded-xl overflow-hidden">
+            <div className="overflow-y-auto max-h-[280px] p-2">
+              <div className="grid grid-cols-4 gap-2">
+                {filtered.map(p => {
+                  const qty = getCartQty(p.id);
+                  return (
+                    <button
+                      key={p.id}
+                      onClick={() => handleProductClick(p)}
+                      onDoubleClick={(e) => { e.preventDefault(); handleDoubleClick(p); }}
+                      onMouseDown={() => handleLongPressStart(p)}
+                      onMouseUp={handleLongPressEnd}
+                      onMouseLeave={handleLongPressEnd}
+                      onTouchStart={() => handleLongPressStart(p)}
+                      onTouchEnd={handleLongPressEnd}
+                      className="relative bg-background border border-border rounded-lg p-2 text-center hover:border-primary/40 transition-colors select-none active:scale-95"
+                    >
+                      {qty > 0 && (
+                        <span className="absolute -top-1 -right-1 w-5 h-5 bg-primary text-primary-foreground rounded-full text-[9px] font-bold flex items-center justify-center z-10">
+                          {qty}
+                        </span>
+                      )}
+                      <div className="w-full aspect-square rounded-md bg-accent flex items-center justify-center mb-1">
+                        <span className="text-base font-bold text-primary">{p.name[0]}</span>
+                      </div>
+                      <p className="text-[9px] font-medium text-card-foreground leading-tight truncate">{p.name}</p>
+                      <p className="text-[9px] text-primary font-bold">₹{p.price}</p>
+                    </button>
+                  );
+                })}
               </div>
-              <p className="text-[11px] font-medium text-card-foreground leading-tight truncate">{p.name}</p>
-              <p className="text-[10px] text-primary font-bold mt-0.5">NPR {p.price}</p>
-            </button>
-          ))}
+            </div>
+          </div>
         </div>
 
         {cart.length > 0 && (
@@ -240,6 +306,14 @@ const PosPage = () => {
         )}
       </main>
 
+      {/* Fixed Add Product Button */}
+      <button
+        onClick={() => { setEditingProduct(null); setEName(""); setEPrice(""); setECategory("Food"); setShowEditModal(true); }}
+        className="fixed bottom-20 right-4 max-w-md w-14 h-14 bg-primary text-primary-foreground rounded-full shadow-lg flex items-center justify-center z-40 hover:bg-primary/90 transition-colors"
+      >
+        <Plus size={24} />
+      </button>
+
       {cart.length > 0 && (
         <div className="fixed bottom-0 left-0 right-0 max-w-md mx-auto bg-card border-t border-border px-4 py-3 safe-bottom z-30">
           <button className="w-full bg-primary text-primary-foreground py-3.5 rounded-xl font-semibold text-sm flex items-center justify-center gap-2">
@@ -249,12 +323,12 @@ const PosPage = () => {
         </div>
       )}
 
-      {/* Edit Product Modal */}
-      {showEditModal && editingProduct && (
+      {/* Edit/Create Product Modal */}
+      {showEditModal && (
         <div className="fixed inset-0 bg-foreground/50 z-50 flex items-end">
           <div className="w-full max-w-md mx-auto bg-card rounded-t-2xl p-5 animate-in slide-in-from-bottom">
             <div className="flex items-center justify-between mb-4">
-              <h2 className="text-lg font-bold text-card-foreground">Edit Product</h2>
+              <h2 className="text-lg font-bold text-card-foreground">{editingProduct ? "Edit Product" : "Add Product"}</h2>
               <button onClick={() => { setShowEditModal(false); setEditingProduct(null); }}><X size={20} className="text-muted-foreground" /></button>
             </div>
             <div className="space-y-3">
@@ -263,8 +337,21 @@ const PosPage = () => {
               <select value={eCategory} onChange={e => setECategory(e.target.value)} className="w-full bg-background border border-border rounded-xl py-3 px-4 text-sm text-card-foreground focus:outline-none focus:ring-2 focus:ring-ring">
                 {categories.filter(c => c !== "All").map(c => <option key={c}>{c}</option>)}
               </select>
-              <button onClick={handleEditSave} className="w-full bg-primary text-primary-foreground py-3.5 rounded-xl font-semibold text-sm">Update Product</button>
-              <button onClick={handleEditDelete} className="w-full border border-destructive text-destructive py-3 rounded-xl font-semibold text-sm">Remove Product</button>
+              {editingProduct ? (
+                <>
+                  <button onClick={handleEditSave} className="w-full bg-primary text-primary-foreground py-3.5 rounded-xl font-semibold text-sm">Update Product</button>
+                  <button onClick={handleEditDelete} className="w-full border border-destructive text-destructive py-3 rounded-xl font-semibold text-sm">Remove Product</button>
+                </>
+              ) : (
+                <button onClick={() => {
+                  if (eName && ePrice) {
+                    const newId = Math.max(...products.map(p => p.id), 0) + 1;
+                    setProducts(prev => [...prev, { id: newId, name: eName, price: parseInt(ePrice), category: eCategory }]);
+                    toast(`${eName} added!`);
+                    setShowEditModal(false);
+                  }
+                }} className="w-full bg-primary text-primary-foreground py-3.5 rounded-xl font-semibold text-sm">Add Product</button>
+              )}
             </div>
           </div>
         </div>

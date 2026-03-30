@@ -20,6 +20,8 @@ import SettingsPage from "./pages/SettingsPage";
 import PosPage from "./pages/PosPage";
 import ContactsPage from "./pages/ContactsPage";
 import BillingPage from "./pages/BillingPage";
+import UserManagementPage from "./pages/UserManagementPage";
+import SubscriptionPage from "./pages/SubscriptionPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -48,6 +50,8 @@ const App = () => (
           <Route path="/pos" element={<PosPage />} />
           <Route path="/contacts" element={<ContactsPage />} />
           <Route path="/billing" element={<BillingPage />} />
+          <Route path="/user-management" element={<UserManagementPage />} />
+          <Route path="/subscription" element={<SubscriptionPage />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>

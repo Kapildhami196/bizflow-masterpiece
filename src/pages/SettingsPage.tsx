@@ -49,8 +49,8 @@ const SettingsPage = () => {
       <SectionHeader title="Business" />
       <div className="mx-4 bg-card rounded-xl border border-border overflow-hidden divide-y divide-border">
         <MenuListItem icon={<Building2 size={18} />} title="Business Profile" subtitle="Name, address, tax ID, logo" />
-        <MenuListItem icon={<Users size={18} />} title="User Management" subtitle="Roles, permissions, staff access" />
-        <MenuListItem icon={<Crown size={18} />} title="Subscription" subtitle="Current plan: Platinum" />
+        <MenuListItem icon={<Users size={18} />} title="User Management" subtitle="Roles, permissions, staff access" onClick={() => navigate("/user-management")} />
+        <MenuListItem icon={<Crown size={18} />} title="Subscription" subtitle="Current plan: Platinum" onClick={() => navigate("/subscription")} />
       </div>
 
       {/* Preferences */}

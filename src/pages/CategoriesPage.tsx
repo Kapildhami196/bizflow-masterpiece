@@ -2,9 +2,9 @@ import { useState } from "react";
 import { AppShell } from "@/components/layout/AppShell";
 import { Plus, Tag, X } from "lucide-react";
 
-const tabs = ["All", "Income", "Expense", "Business"];
+const tabs = ["All", "Income", "Expense", "Business", "Product"];
 
-const categories = [
+const initialCategories = [
   { id: 1, name: "Salary", group: "income", color: "bg-success/15", textColor: "text-success", system: true },
   { id: 2, name: "Rent", group: "income", color: "bg-success/15", textColor: "text-success", system: true },
   { id: 3, name: "Sale", group: "business", color: "bg-primary/15", textColor: "text-primary", system: true },
@@ -17,12 +17,52 @@ const categories = [
   { id: 10, name: "EMI Payment", group: "expense", color: "bg-warning/15", textColor: "text-warning", system: true },
   { id: 11, name: "Gift", group: "income", color: "bg-success/15", textColor: "text-success", system: false },
   { id: 12, name: "Shop Supplies", group: "expense", color: "bg-destructive/15", textColor: "text-destructive", system: false },
+  { id: 13, name: "Grocery", group: "product", color: "bg-accent/50", textColor: "text-accent-foreground", system: true },
+  { id: 14, name: "Beverages", group: "product", color: "bg-accent/50", textColor: "text-accent-foreground", system: true },
+  { id: 15, name: "Food", group: "product", color: "bg-accent/50", textColor: "text-accent-foreground", system: true },
+  { id: 16, name: "Electronics", group: "product", color: "bg-accent/50", textColor: "text-accent-foreground", system: true },
+  { id: 17, name: "Services", group: "product", color: "bg-accent/50", textColor: "text-accent-foreground", system: true },
 ];
+
+const groupColors: Record<string, { bg: string; text: string }> = {
+  income: { bg: "bg-success/15", text: "text-success" },
+  expense: { bg: "bg-destructive/15", text: "text-destructive" },
+  business: { bg: "bg-primary/15", text: "text-primary" },
+  product: { bg: "bg-accent/50", text: "text-accent-foreground" },
+};
 
 const CategoriesPage = () => {
   const [activeTab, setActiveTab] = useState("All");
+  const [categoryList, setCategoryList] = useState(initialCategories);
   const [showForm, setShowForm] = useState(false);
-  const filtered = activeTab === "All" ? categories : categories.filter(c => c.group === activeTab.toLowerCase());
+  const [newName, setNewName] = useState("");
+  const [newGroup, setNewGroup] = useState("income");
+  const [newDesc, setNewDesc] = useState("");
+
+  const filtered = activeTab === "All" ? categoryList : categoryList.filter(c => c.group === activeTab.toLowerCase());
+
+  const handleSave = () => {
+    if (!newName.trim()) return;
+    const colors = groupColors[newGroup] || groupColors.income;
+    const newCat = {
+      id: Date.now(),
+      name: newName.trim(),
+      group: newGroup,
+      color: colors.bg,
+      textColor: colors.text,
+      system: false,
+    };
+    setCategoryList(prev => [...prev, newCat]);
+    setNewName("");
+    setNewGroup("income");
+    setNewDesc("");
+    setShowForm(false);
+  };
+
+  const handleDelete = (id: number, system: boolean) => {
+    if (system) return;
+    setCategoryList(prev => prev.filter(c => c.id !== id));
+  };
 
   return (
     <AppShell headerTitle="Categories">
@@ -47,7 +87,10 @@ const CategoriesPage = () => {
             {c.system ? (
               <span className="text-[10px] font-medium bg-muted text-muted-foreground px-2 py-0.5 rounded">System</span>
             ) : (
-              <span className="text-[10px] font-medium bg-accent text-accent-foreground px-2 py-0.5 rounded">Custom</span>
+              <div className="flex items-center gap-2">
+                <span className="text-[10px] font-medium bg-accent text-accent-foreground px-2 py-0.5 rounded">Custom</span>
+                <button onClick={() => handleDelete(c.id, c.system)} className="text-destructive"><X size={14} /></button>
+              </div>
             )}
           </div>
         ))}
@@ -67,14 +110,15 @@ const CategoriesPage = () => {
               <button onClick={() => setShowForm(false)}><X size={20} className="text-muted-foreground" /></button>
             </div>
             <div className="space-y-3">
-              <input placeholder="Category Name *" className="w-full bg-background border border-border rounded-xl py-3 px-4 text-sm text-card-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring" />
-              <select className="w-full bg-background border border-border rounded-xl py-3 px-4 text-sm text-card-foreground focus:outline-none focus:ring-2 focus:ring-ring">
-                <option>Income</option>
-                <option>Expense</option>
-                <option>Business</option>
+              <input value={newName} onChange={e => setNewName(e.target.value)} placeholder="Category Name *" className="w-full bg-background border border-border rounded-xl py-3 px-4 text-sm text-card-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring" />
+              <select value={newGroup} onChange={e => setNewGroup(e.target.value)} className="w-full bg-background border border-border rounded-xl py-3 px-4 text-sm text-card-foreground focus:outline-none focus:ring-2 focus:ring-ring">
+                <option value="income">Income</option>
+                <option value="expense">Expense</option>
+                <option value="business">Business</option>
+                <option value="product">Product</option>
               </select>
-              <textarea placeholder="Description" rows={2} className="w-full bg-background border border-border rounded-xl py-3 px-4 text-sm text-card-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring resize-none" />
-              <button onClick={() => setShowForm(false)} className="w-full bg-primary text-primary-foreground py-3.5 rounded-xl font-semibold text-sm">
+              <textarea value={newDesc} onChange={e => setNewDesc(e.target.value)} placeholder="Description" rows={2} className="w-full bg-background border border-border rounded-xl py-3 px-4 text-sm text-card-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring resize-none" />
+              <button onClick={handleSave} className="w-full bg-primary text-primary-foreground py-3.5 rounded-xl font-semibold text-sm">
                 Save Category
               </button>
             </div>

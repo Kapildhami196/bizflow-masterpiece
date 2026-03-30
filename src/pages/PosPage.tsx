@@ -17,9 +17,7 @@ interface SlotProduct {
   category: string;
 }
 
-const categories = ["All", "Food", "Beverages", "Electronics", "Grocery", "Services"];
-
-const availableProducts = [
+const initialProducts = [
   { id: 1, name: "Basmati Rice (25kg)", price: 2500, category: "Grocery" },
   { id: 2, name: "Cooking Oil (5L)", price: 850, category: "Grocery" },
   { id: 3, name: "Sugar (1kg)", price: 95, category: "Grocery" },
@@ -56,13 +54,34 @@ const PosPage = () => {
   const [showPicker, setShowPicker] = useState(false);
   const [pickerSlotIndex, setPickerSlotIndex] = useState<number | null>(null);
   const [pickerSearch, setPickerSearch] = useState("");
-  const [pickerCategory, setPickerCategory] = useState("All");
+  const [availableProducts, setAvailableProducts] = useState(initialProducts);
+  const [showAddProduct, setShowAddProduct] = useState(false);
+  const [newProductName, setNewProductName] = useState("");
+  const [newProductPrice, setNewProductPrice] = useState("");
 
   const openPicker = (slotIndex: number) => {
     setPickerSlotIndex(slotIndex);
     setPickerSearch("");
-    setPickerCategory("All");
     setShowPicker(true);
+  };
+
+  const handleAddNewProduct = () => {
+    if (!newProductName.trim() || !newProductPrice.trim()) {
+      toast.error("Name and price are required");
+      return;
+    }
+    const newProduct: SlotProduct = {
+      id: Date.now(),
+      name: newProductName.trim(),
+      price: parseFloat(newProductPrice),
+      category: "General",
+    };
+    setAvailableProducts(prev => [...prev, newProduct]);
+    selectProductForSlot(newProduct);
+    setNewProductName("");
+    setNewProductPrice("");
+    setShowAddProduct(false);
+    toast.success(`Product "${newProduct.name}" created & added`);
   };
 
   const handleSlotClick = (slotIndex: number) => {
@@ -97,11 +116,9 @@ const PosPage = () => {
     setPickerSlotIndex(null);
   };
 
-  const filteredPickerProducts = availableProducts.filter(p => {
-    const matchSearch = p.name.toLowerCase().includes(pickerSearch.toLowerCase());
-    const matchCat = pickerCategory === "All" || p.category === pickerCategory;
-    return matchSearch && matchCat;
-  });
+  const filteredPickerProducts = availableProducts.filter(p =>
+    p.name.toLowerCase().includes(pickerSearch.toLowerCase())
+  );
 
   const updateQty = (id: number, delta: number) => {
     setCart(prev => prev.map(i => i.id === id ? { ...i, qty: Math.max(1, i.qty + delta) } : i));
@@ -304,17 +321,38 @@ const PosPage = () => {
               </div>
             </div>
 
-            {/* Category Filters */}
-            <div className="flex gap-1.5 px-4 pt-2 pb-1 overflow-x-auto no-scrollbar">
-              {categories.map(cat => (
-                <button key={cat} onClick={() => setPickerCategory(cat)}
-                  className={`px-3 py-1.5 rounded-full text-[10px] font-semibold whitespace-nowrap transition-colors ${
-                    pickerCategory === cat ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"
-                  }`}>
-                  {cat}
-                </button>
-              ))}
+            {/* Add New Product Button */}
+            <div className="px-4 pt-2">
+              <button
+                onClick={() => setShowAddProduct(true)}
+                className="w-full flex items-center justify-center gap-2 py-2.5 rounded-lg border border-dashed border-primary/40 text-primary text-xs font-semibold hover:bg-primary/5 transition-colors"
+              >
+                <Plus size={14} /> Create New Product
+              </button>
             </div>
+
+            {/* Add Product Form Inline */}
+            {showAddProduct && (
+              <div className="px-4 pt-2 space-y-2">
+                <input
+                  value={newProductName}
+                  onChange={e => setNewProductName(e.target.value)}
+                  placeholder="Product name *"
+                  className="w-full bg-background border border-border rounded-lg py-2.5 px-3 text-sm text-card-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring"
+                />
+                <input
+                  value={newProductPrice}
+                  onChange={e => setNewProductPrice(e.target.value)}
+                  placeholder="Price (NPR) *"
+                  type="number"
+                  className="w-full bg-background border border-border rounded-lg py-2.5 px-3 text-sm text-card-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring"
+                />
+                <div className="flex gap-2">
+                  <button onClick={() => setShowAddProduct(false)} className="flex-1 py-2 rounded-lg border border-border text-xs font-medium text-muted-foreground">Cancel</button>
+                  <button onClick={handleAddNewProduct} className="flex-1 py-2 rounded-lg bg-primary text-primary-foreground text-xs font-semibold">Add & Select</button>
+                </div>
+              </div>
+            )}
 
             {/* Product List */}
             <div className="flex-1 overflow-y-auto p-4 space-y-1">

@@ -252,10 +252,30 @@ const PosPage = () => {
               </div>
             </>
           ) : (
-            <div className="flex flex-col items-center py-4">
-              <Package size={24} className="text-muted-foreground/30 mb-1" />
-              <p className="text-xs text-muted-foreground">No items in cart. Tap an empty slot to add products.</p>
-            </div>
+            <>
+              <div className="divide-y divide-border">
+                <div className="flex items-center gap-2 py-2.5">
+                  <div className="flex-1"><div className="h-3 w-24 bg-muted rounded" /></div>
+                  <div className="h-3 w-12 bg-muted rounded" />
+                </div>
+                <div className="flex items-center gap-2 py-2.5">
+                  <div className="flex-1"><div className="h-3 w-20 bg-muted rounded" /></div>
+                  <div className="h-3 w-12 bg-muted rounded" />
+                </div>
+                <div className="flex items-center gap-2 py-2.5">
+                  <div className="flex-1"><div className="h-3 w-28 bg-muted rounded" /></div>
+                  <div className="h-3 w-12 bg-muted rounded" />
+                </div>
+              </div>
+              <div className="space-y-1 text-xs border-t border-border pt-2 mt-2">
+                <div className="flex justify-between"><span className="text-muted-foreground">Gross</span><span className="text-muted-foreground">NPR 0</span></div>
+                <div className="flex justify-between"><span className="text-muted-foreground">VAT ({taxRate}%)</span><span className="text-muted-foreground">NPR 0</span></div>
+              </div>
+              <div className="flex justify-between pt-2 mt-1 border-t border-border">
+                <span className="text-sm font-bold text-muted-foreground">Grand Total</span>
+                <span className="text-lg font-bold text-muted-foreground">NPR 0</span>
+              </div>
+            </>
           )}
         </div>
 

@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Search, Plus, Minus, Trash2, ShoppingCart, X, Percent, MoreHorizontal, Package } from "lucide-react";
+import { Search, Plus, Minus, Trash2, ShoppingCart, X, Percent, Package } from "lucide-react";
 import { toast } from "sonner";
 
 interface CartItem {

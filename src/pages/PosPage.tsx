@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Search, Plus, Minus, Trash2, ShoppingCart, X, Percent, Package } from "lucide-react";
+import { Search, Plus, Minus, Trash2, ShoppingCart, X, Percent, Package, Printer } from "lucide-react";
 import { toast } from "sonner";
 
 interface CartItem {
@@ -50,7 +50,6 @@ const PosPage = () => {
   const [surcharge, setSurcharge] = useState(0);
   const [taxRate] = useState(13);
 
-  // Product picker popup state
   const [showPicker, setShowPicker] = useState(false);
   const [pickerSlotIndex, setPickerSlotIndex] = useState<number | null>(null);
   const [pickerSearch, setPickerSearch] = useState("");
@@ -87,7 +86,6 @@ const PosPage = () => {
   const handleSlotClick = (slotIndex: number) => {
     const product = slots[slotIndex];
     if (product) {
-      // Remove product from slot and cart
       setSlots(prev => prev.map((s, i) => i === slotIndex ? null : s));
       setCart(prev => {
         const existing = prev.find(i => i.id === product.id);
@@ -105,7 +103,6 @@ const PosPage = () => {
   const selectProductForSlot = (product: SlotProduct) => {
     if (pickerSlotIndex === null) return;
     setSlots(prev => prev.map((s, i) => i === pickerSlotIndex ? product : s));
-    // Add to cart
     setCart(prev => {
       const existing = prev.find(i => i.id === product.id);
       if (existing) return prev.map(i => i.id === product.id ? { ...i, qty: i.qty + 1 } : i);
@@ -126,7 +123,6 @@ const PosPage = () => {
 
   const removeFromCart = (id: number) => {
     setCart(prev => prev.filter(i => i.id !== id));
-    // Also clear slots with this product
     setSlots(prev => prev.map(s => s && s.id === id ? null : s));
   };
 
@@ -136,6 +132,55 @@ const PosPage = () => {
   const taxAmount = (taxableAmount * taxRate) / 100;
   const grandTotal = taxableAmount + taxAmount + surcharge;
   const totalItems = cart.reduce((s, i) => s + i.qty, 0);
+
+  const handlePrintReceipt = () => {
+    const receiptWindow = window.open("", "_blank", "width=320,height=600");
+    if (!receiptWindow) {
+      toast.error("Popup blocked. Please allow popups.");
+      return;
+    }
+    const now = new Date();
+    receiptWindow.document.write(`
+      <html><head><title>POS Receipt</title>
+      <style>
+        * { margin:0; padding:0; box-sizing:border-box; }
+        body { font-family: 'Courier New', monospace; width:280px; margin:0 auto; padding:12px; font-size:11px; }
+        .center { text-align:center; }
+        .bold { font-weight:bold; }
+        .line { border-top:1px dashed #333; margin:6px 0; }
+        .row { display:flex; justify-content:space-between; padding:2px 0; }
+        h2 { font-size:16px; margin:4px 0; }
+        .total-row { font-size:14px; font-weight:bold; }
+      </style></head><body>
+        <div class="center">
+          <h2 class="bold">eLekha POS</h2>
+          <p>${now.toLocaleDateString()} ${now.toLocaleTimeString()}</p>
+        </div>
+        <div class="line"></div>
+        ${cart.map(item => `
+          <div class="row">
+            <span>${item.name} x${item.qty}</span>
+            <span>NPR ${(item.price * item.qty).toLocaleString()}</span>
+          </div>
+        `).join("")}
+        <div class="line"></div>
+        <div class="row"><span>Gross</span><span>NPR ${grossAmount.toLocaleString()}</span></div>
+        ${discountPercent > 0 ? `<div class="row"><span>Discount (${discountPercent}%)</span><span>-NPR ${discountAmount.toLocaleString()}</span></div>` : ""}
+        <div class="row"><span>VAT (${taxRate}%)</span><span>NPR ${taxAmount.toLocaleString()}</span></div>
+        ${surcharge > 0 ? `<div class="row"><span>Surcharge</span><span>NPR ${surcharge.toLocaleString()}</span></div>` : ""}
+        <div class="line"></div>
+        <div class="row total-row"><span>TOTAL</span><span>NPR ${grandTotal.toLocaleString()}</span></div>
+        <div class="line"></div>
+        <div class="center" style="margin-top:8px;">
+          <p>Thank you for your purchase!</p>
+          <p style="font-size:9px;margin-top:4px;">Powered by eLekha</p>
+        </div>
+        <script>window.print();</script>
+      </body></html>
+    `);
+    receiptWindow.document.close();
+    toast.success("Receipt sent to printer");
+  };
 
   return (
     <div className="flex flex-col min-h-screen max-w-md mx-auto bg-background relative">
@@ -279,11 +324,10 @@ const PosPage = () => {
           )}
         </div>
 
-        {/* Cart Action Buttons - Always visible */}
+        {/* Cart Action Buttons */}
         <div className="px-4 mt-3">
           <div className="bg-card rounded-xl border border-border p-3 space-y-2">
-            {/* Primary row */}
-            <div className="grid grid-cols-3 gap-2">
+            <div className="grid grid-cols-4 gap-2">
               <button
                 onClick={() => cart.length > 0 && toast.success("Processing payment...")}
                 className={`py-3 rounded-xl text-xs font-bold flex flex-col items-center gap-1 transition-all ${
@@ -292,7 +336,7 @@ const PosPage = () => {
                     : "bg-muted text-muted-foreground cursor-not-allowed"
                 }`}
               >
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
                 Pay
               </button>
               <button
@@ -309,7 +353,7 @@ const PosPage = () => {
                     : "bg-muted text-muted-foreground cursor-not-allowed"
                 }`}
               >
-                <Trash2 size={16} />
+                <Trash2 size={14} />
                 Clear
               </button>
               <button
@@ -320,12 +364,22 @@ const PosPage = () => {
                     : "bg-muted text-muted-foreground cursor-not-allowed"
                 }`}
               >
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M16 3h5v5M8 3H3v5M3 16v5h5M21 16v5h-5M12 3v18"/></svg>
-                Split Bill
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M16 3h5v5M8 3H3v5M3 16v5h5M21 16v5h-5M12 3v18"/></svg>
+                Split
+              </button>
+              <button
+                onClick={() => cart.length > 0 && handlePrintReceipt()}
+                className={`py-3 rounded-xl text-xs font-bold flex flex-col items-center gap-1 transition-all active:scale-95 ${
+                  cart.length > 0
+                    ? "bg-accent text-accent-foreground border border-border"
+                    : "bg-muted text-muted-foreground cursor-not-allowed"
+                }`}
+              >
+                <Printer size={14} />
+                Print
               </button>
             </div>
 
-            {/* Secondary row */}
             <div className="grid grid-cols-2 gap-2">
               <button
                 onClick={() => setDiscountPercent(prev => prev > 0 ? 0 : 10)}
@@ -371,7 +425,6 @@ const PosPage = () => {
       {showPicker && (
         <div className="fixed inset-0 bg-foreground/50 z-50 flex items-end">
           <div className="w-full max-w-md mx-auto bg-card rounded-t-2xl animate-in slide-in-from-bottom max-h-[75vh] flex flex-col">
-            {/* Picker Header */}
             <div className="flex items-center justify-between p-4 border-b border-border">
               <h2 className="text-base font-bold text-card-foreground">Select Product</h2>
               <button onClick={() => { setShowPicker(false); setPickerSlotIndex(null); }}>
@@ -379,7 +432,6 @@ const PosPage = () => {
               </button>
             </div>
 
-            {/* Search */}
             <div className="px-4 pt-3">
               <div className="relative">
                 <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
@@ -393,7 +445,6 @@ const PosPage = () => {
               </div>
             </div>
 
-            {/* Add New Product Button */}
             <div className="px-4 pt-2">
               <button
                 onClick={() => setShowAddProduct(true)}
@@ -403,7 +454,6 @@ const PosPage = () => {
               </button>
             </div>
 
-            {/* Add Product Form Inline */}
             {showAddProduct && (
               <div className="px-4 pt-2 space-y-2">
                 <input
@@ -426,7 +476,6 @@ const PosPage = () => {
               </div>
             )}
 
-            {/* Product List */}
             <div className="flex-1 overflow-y-auto p-4 space-y-1">
               {filteredPickerProducts.length > 0 ? filteredPickerProducts.map(product => (
                 <button

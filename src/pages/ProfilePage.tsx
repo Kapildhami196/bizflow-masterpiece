@@ -1,9 +1,10 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   Building2, Phone, Mail, MapPin, Edit, ChevronDown, Check, User,
-  LogOut, Plus, Camera, Shield, Globe, Calendar
+  LogOut, Plus, Camera, Shield, Globe, Calendar, Upload, ImageIcon
 } from "lucide-react";
+import { toast } from "sonner";
 
 const ProfilePage = () => {
   const navigate = useNavigate();
@@ -12,6 +13,10 @@ const ProfilePage = () => {
   const [showAccountSwitch, setShowAccountSwitch] = useState(false);
   const [activeAccount, setActiveAccount] = useState<"business" | "personal">("business");
   const [showMoreBusiness, setShowMoreBusiness] = useState(false);
+  const [profilePhoto, setProfilePhoto] = useState<string | null>(null);
+  const [businessLogo, setBusinessLogo] = useState<string | null>(null);
+  const profileInputRef = useRef<HTMLInputElement>(null);
+  const logoInputRef = useRef<HTMLInputElement>(null);
 
   const [personalProfile, setPersonalProfile] = useState({
     fullName: "Kapil Dhami",
@@ -35,6 +40,7 @@ const ProfilePage = () => {
   const handleSavePersonal = () => {
     setPersonalProfile({ ...editPersonal });
     setIsEditingPersonal(false);
+    toast.success("Personal profile updated");
   };
   const handleCancelPersonal = () => {
     setEditPersonal({ ...personalProfile });
@@ -43,10 +49,31 @@ const ProfilePage = () => {
   const handleSaveBusiness = () => {
     setBusinessProfile({ ...editBusiness });
     setIsEditingBusiness(false);
+    toast.success("Business profile updated");
   };
   const handleCancelBusiness = () => {
     setEditBusiness({ ...businessProfile });
     setIsEditingBusiness(false);
+  };
+
+  const handleProfilePhoto = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => setProfilePhoto(reader.result as string);
+      reader.readAsDataURL(file);
+      toast.success("Profile photo updated");
+    }
+  };
+
+  const handleBusinessLogo = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => setBusinessLogo(reader.result as string);
+      reader.readAsDataURL(file);
+      toast.success("Business logo uploaded");
+    }
   };
 
   return (
@@ -61,10 +88,15 @@ const ProfilePage = () => {
           </div>
           <div className="flex items-center gap-4">
             <div className="relative">
-              <div className="w-[68px] h-[68px] rounded-full border-[2.5px] border-white/25 flex items-center justify-center bg-white/10 shadow-lg">
-                <span className="text-[22px] font-bold tracking-wide">{initials}</span>
+              <div className="w-[68px] h-[68px] rounded-full border-[2.5px] border-white/25 flex items-center justify-center bg-white/10 shadow-lg overflow-hidden">
+                {profilePhoto ? (
+                  <img src={profilePhoto} alt="Profile" className="w-full h-full object-cover" />
+                ) : (
+                  <span className="text-[22px] font-bold tracking-wide">{initials}</span>
+                )}
               </div>
-              <button className="absolute -bottom-0.5 -right-0.5 w-6 h-6 rounded-full bg-white text-primary flex items-center justify-center shadow-md">
+              <input type="file" ref={profileInputRef} accept="image/*" onChange={handleProfilePhoto} className="hidden" />
+              <button onClick={() => profileInputRef.current?.click()} className="absolute -bottom-0.5 -right-0.5 w-6 h-6 rounded-full bg-white text-primary flex items-center justify-center shadow-md">
                 <Camera size={12} />
               </button>
             </div>
@@ -122,6 +154,48 @@ const ProfilePage = () => {
                 ))}
               </div>
             )}
+          </div>
+        </div>
+
+        {/* Business Logo Upload Card */}
+        <div className="px-4 mt-4">
+          <div className="bg-card rounded-2xl border border-border shadow-sm overflow-hidden">
+            <div className="flex items-center gap-2 px-4 py-3 border-b border-border">
+              <ImageIcon size={15} className="text-primary" />
+              <span className="text-sm font-semibold text-card-foreground">Business Logo</span>
+            </div>
+            <div className="p-4">
+              <input type="file" ref={logoInputRef} accept="image/*" onChange={handleBusinessLogo} className="hidden" />
+              <div className="flex items-center gap-4">
+                <div
+                  onClick={() => logoInputRef.current?.click()}
+                  className="w-20 h-20 rounded-2xl border-2 border-dashed border-border bg-muted/30 flex flex-col items-center justify-center cursor-pointer hover:border-primary/40 hover:bg-primary/5 transition-all overflow-hidden"
+                >
+                  {businessLogo ? (
+                    <img src={businessLogo} alt="Logo" className="w-full h-full object-contain p-1" />
+                  ) : (
+                    <>
+                      <Upload size={18} className="text-muted-foreground mb-1" />
+                      <span className="text-[9px] text-muted-foreground">Upload</span>
+                    </>
+                  )}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-xs font-medium text-card-foreground">
+                    {businessLogo ? "Logo uploaded" : "No logo uploaded"}
+                  </p>
+                  <p className="text-[10px] text-muted-foreground mt-0.5">
+                    Used on invoices, receipts & reports
+                  </p>
+                  <button
+                    onClick={() => logoInputRef.current?.click()}
+                    className="mt-2 text-xs font-semibold text-primary flex items-center gap-1 hover:underline"
+                  >
+                    <Upload size={10} /> {businessLogo ? "Change Logo" : "Upload Logo"}
+                  </button>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
 

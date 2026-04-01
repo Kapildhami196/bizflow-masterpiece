@@ -1,16 +1,17 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { AppShell } from "@/components/layout/AppShell";
-import { Search, Plus, Package, X } from "lucide-react";
+import { Search, Plus, Package, X, Upload, ImageIcon } from "lucide-react";
+import { toast } from "sonner";
 
 const tabs = ["All", "Items", "Services"];
 
 const initialProducts = [
-  { id: 1, name: "Basmati Rice (25kg)", kind: "item" as const, salePrice: 2500, costPrice: 2100, stock: 45, unit: "bag", active: true },
-  { id: 2, name: "Cooking Oil (5L)", kind: "item" as const, salePrice: 850, costPrice: 720, stock: 30, unit: "bottle", active: true },
-  { id: 3, name: "Sugar (1kg)", kind: "item" as const, salePrice: 95, costPrice: 78, stock: 120, unit: "kg", active: true },
-  { id: 4, name: "Home Delivery", kind: "service" as const, salePrice: 100, costPrice: 0, stock: null, unit: "-", active: true },
-  { id: 5, name: "Flour (10kg)", kind: "item" as const, salePrice: 550, costPrice: 450, stock: 3, unit: "bag", active: true },
-  { id: 6, name: "Installation Service", kind: "service" as const, salePrice: 500, costPrice: 0, stock: null, unit: "-", active: true },
+  { id: 1, name: "Basmati Rice (25kg)", kind: "item" as const, salePrice: 2500, costPrice: 2100, stock: 45, unit: "bag", active: true, photo: null as string | null },
+  { id: 2, name: "Cooking Oil (5L)", kind: "item" as const, salePrice: 850, costPrice: 720, stock: 30, unit: "bottle", active: true, photo: null as string | null },
+  { id: 3, name: "Sugar (1kg)", kind: "item" as const, salePrice: 95, costPrice: 78, stock: 120, unit: "kg", active: true, photo: null as string | null },
+  { id: 4, name: "Home Delivery", kind: "service" as const, salePrice: 100, costPrice: 0, stock: null, unit: "-", active: true, photo: null as string | null },
+  { id: 5, name: "Flour (10kg)", kind: "item" as const, salePrice: 550, costPrice: 450, stock: 3, unit: "bag", active: true, photo: null as string | null },
+  { id: 6, name: "Installation Service", kind: "service" as const, salePrice: 500, costPrice: 0, stock: null, unit: "-", active: true, photo: null as string | null },
 ];
 
 const ProductsPage = () => {
@@ -29,12 +30,14 @@ const ProductsPage = () => {
   const [fSku, setFSku] = useState("");
   const [fTax, setFTax] = useState("");
   const [fDesc, setFDesc] = useState("");
+  const [fPhoto, setFPhoto] = useState<string | null>(null);
+  const photoInputRef = useRef<HTMLInputElement>(null);
 
   const filtered = activeTab === "All" ? products : products.filter(p => p.kind === activeTab.toLowerCase().slice(0, -1));
 
   const openNew = () => {
     setEditingItem(null);
-    setFName(""); setFKind("Item"); setFSalePrice(""); setFCostPrice(""); setFStock(""); setFUnit("pcs"); setFCategory(""); setFSku(""); setFTax(""); setFDesc("");
+    setFName(""); setFKind("Item"); setFSalePrice(""); setFCostPrice(""); setFStock(""); setFUnit("pcs"); setFCategory(""); setFSku(""); setFTax(""); setFDesc(""); setFPhoto(null);
     setShowForm(true);
   };
 
@@ -43,8 +46,17 @@ const ProductsPage = () => {
     setFName(p.name); setFKind(p.kind === "item" ? "Item" : "Service");
     setFSalePrice(p.salePrice.toString()); setFCostPrice(p.costPrice.toString());
     setFStock(p.stock?.toString() || ""); setFUnit(p.unit);
-    setFCategory(""); setFSku(""); setFTax(""); setFDesc("");
+    setFCategory(""); setFSku(""); setFTax(""); setFDesc(""); setFPhoto(p.photo);
     setShowForm(true);
+  };
+
+  const handlePhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => setFPhoto(reader.result as string);
+      reader.readAsDataURL(file);
+    }
   };
 
   const handleSave = () => {
@@ -57,7 +69,23 @@ const ProductsPage = () => {
         costPrice: fCostPrice ? parseInt(fCostPrice) : p.costPrice,
         stock: fKind === "Service" ? null : (fStock ? parseInt(fStock) : p.stock),
         unit: fUnit || p.unit,
+        photo: fPhoto,
       } : p));
+      toast.success("Product updated");
+    } else {
+      const newProduct = {
+        id: Date.now(),
+        name: fName,
+        kind: fKind.toLowerCase() as "item" | "service",
+        salePrice: parseInt(fSalePrice) || 0,
+        costPrice: parseInt(fCostPrice) || 0,
+        stock: fKind === "Service" ? null : (parseInt(fStock) || 0),
+        unit: fUnit,
+        active: true,
+        photo: fPhoto,
+      };
+      setProducts(prev => [...prev, newProduct]);
+      toast.success("Product added");
     }
     setShowForm(false);
     setEditingItem(null);
@@ -67,6 +95,7 @@ const ProductsPage = () => {
     if (editingItem) setProducts(prev => prev.filter(p => p.id !== editingItem.id));
     setShowForm(false);
     setEditingItem(null);
+    toast.success("Product deleted");
   };
 
   return (
@@ -104,8 +133,12 @@ const ProductsPage = () => {
       <div className="mx-4 mt-3 bg-card rounded-xl border border-border overflow-hidden divide-y divide-border">
         {filtered.map(p => (
           <button key={p.id} onClick={() => openEdit(p)} className="flex items-center gap-3 px-4 py-3.5 w-full text-left hover:bg-muted/50 transition-colors">
-            <div className="w-10 h-10 rounded-lg bg-accent flex items-center justify-center shrink-0">
-              <Package size={18} className="text-primary" />
+            <div className="w-10 h-10 rounded-lg bg-accent flex items-center justify-center shrink-0 overflow-hidden">
+              {p.photo ? (
+                <img src={p.photo} alt={p.name} className="w-full h-full object-cover" />
+              ) : (
+                <Package size={18} className="text-primary" />
+              )}
             </div>
             <div className="flex-1 min-w-0">
               <p className="text-sm font-semibold text-card-foreground">{p.name}</p>
@@ -138,6 +171,46 @@ const ProductsPage = () => {
               <button onClick={() => { setShowForm(false); setEditingItem(null); }}><X size={20} className="text-muted-foreground" /></button>
             </div>
             <div className="space-y-3">
+              {/* Product Photo Upload */}
+              <div>
+                <label className="text-[10px] font-semibold text-muted-foreground tracking-wider uppercase block mb-2">Product Photo</label>
+                <input type="file" ref={photoInputRef} accept="image/*" onChange={handlePhotoUpload} className="hidden" />
+                <div className="flex items-center gap-3">
+                  <div
+                    onClick={() => photoInputRef.current?.click()}
+                    className="w-20 h-20 rounded-xl border-2 border-dashed border-border bg-muted/30 flex flex-col items-center justify-center cursor-pointer hover:border-primary/40 hover:bg-primary/5 transition-all overflow-hidden"
+                  >
+                    {fPhoto ? (
+                      <img src={fPhoto} alt="Product" className="w-full h-full object-cover" />
+                    ) : (
+                      <>
+                        <ImageIcon size={20} className="text-muted-foreground mb-1" />
+                        <span className="text-[9px] text-muted-foreground">Add Photo</span>
+                      </>
+                    )}
+                  </div>
+                  <div className="flex-1">
+                    <p className="text-xs text-muted-foreground">Upload a product image</p>
+                    <button
+                      type="button"
+                      onClick={() => photoInputRef.current?.click()}
+                      className="mt-1 text-xs font-semibold text-primary flex items-center gap-1"
+                    >
+                      <Upload size={10} /> {fPhoto ? "Change" : "Browse"}
+                    </button>
+                    {fPhoto && (
+                      <button
+                        type="button"
+                        onClick={() => setFPhoto(null)}
+                        className="mt-1 text-xs font-medium text-destructive flex items-center gap-1"
+                      >
+                        <X size={10} /> Remove
+                      </button>
+                    )}
+                  </div>
+                </div>
+              </div>
+
               <input value={fName} onChange={e => setFName(e.target.value)} placeholder="Product Name *" className="w-full bg-background border border-border rounded-xl py-3 px-4 text-sm text-card-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring" />
               <select value={fKind} onChange={e => setFKind(e.target.value)} className="w-full bg-background border border-border rounded-xl py-3 px-4 text-sm text-card-foreground focus:outline-none focus:ring-2 focus:ring-ring">
                 <option>Item</option>

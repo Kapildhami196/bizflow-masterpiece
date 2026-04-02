@@ -1,191 +1,314 @@
-import { useEffect, useState, useRef, useCallback } from "react";
+import { useEffect, useState, useRef } from "react";
+
+// Generate points along a path for the dot to follow
+function getEPoints(cx: number, cy: number, r: number): { x: number; y: number }[] {
+  const points: { x: number; y: number }[] = [];
+  // Horizontal bar left to right
+  const lineSteps = 25;
+  for (let i = 0; i <= lineSteps; i++) {
+    const t = i / lineSteps;
+    points.push({ x: cx - r + t * r * 2, y: cy });
+  }
+  // Arc from right-middle counter-clockwise ~315 degrees
+  const arcSteps = 65;
+  const totalArc = Math.PI * 1.75;
+  for (let i = 0; i <= arcSteps; i++) {
+    const t = i / arcSteps;
+    const angle = -t * totalArc;
+    points.push({ x: cx + Math.cos(angle) * r, y: cy - Math.sin(angle) * r });
+  }
+  return points;
+}
+
+// Generate points for handwriting "e-Lekha" text using bezier strokes
+function getTextPoints(): { x: number; y: number; lift?: boolean }[] {
+  const pts: { x: number; y: number; lift?: boolean }[] = [];
+  const baseY = 0;
+  const h = 28; // letter height
+  const sp = 4; // spacing
+  let x = 0;
+
+  // Helper to sample a bezier
+  function bezier(
+    x0: number, y0: number, cx1: number, cy1: number, cx2: number, cy2: number, x3: number, y3: number, steps = 12
+  ) {
+    for (let i = 0; i <= steps; i++) {
+      const t = i / steps;
+      const u = 1 - t;
+      pts.push({
+        x: u * u * u * x0 + 3 * u * u * t * cx1 + 3 * u * t * t * cx2 + t * t * t * x3,
+        y: u * u * u * y0 + 3 * u * u * t * cy1 + 3 * u * t * t * cy2 + t * t * t * y3,
+      });
+    }
+  }
+
+  function line(x0: number, y0: number, x1: number, y1: number, steps = 8) {
+    for (let i = 0; i <= steps; i++) {
+      const t = i / steps;
+      pts.push({ x: x0 + (x1 - x0) * t, y: y0 + (y1 - y0) * t });
+    }
+  }
+
+  function lift() {
+    pts.push({ x: pts[pts.length - 1]?.x || 0, y: pts[pts.length - 1]?.y || 0, lift: true });
+  }
+
+  // "e" - small, similar to logo
+  const eR = 8;
+  const eCx = x + eR;
+  const eCy = baseY;
+  // bar
+  line(eCx - eR, eCy, eCx + eR, eCy, 8);
+  // arc CCW
+  for (let i = 0; i <= 30; i++) {
+    const t = i / 30;
+    const angle = -t * Math.PI * 1.6;
+    pts.push({ x: eCx + Math.cos(angle) * eR, y: eCy - Math.sin(angle) * eR });
+  }
+  x = eCx + eR + sp + 2;
+  lift();
+
+  // "-" dash
+  line(x, baseY, x + 10, baseY, 6);
+  x += 10 + sp;
+  lift();
+
+  // "L"
+  line(x, baseY - h * 0.5, x, baseY + h * 0.35, 10);
+  line(x, baseY + h * 0.35, x + 14, baseY + h * 0.35, 8);
+  x += 14 + sp;
+  lift();
+
+  // "e"
+  const e2R = 7;
+  const e2Cx = x + e2R;
+  const e2Cy = baseY + 2;
+  line(e2Cx - e2R, e2Cy, e2Cx + e2R, e2Cy, 6);
+  for (let i = 0; i <= 25; i++) {
+    const t = i / 25;
+    const angle = -t * Math.PI * 1.6;
+    pts.push({ x: e2Cx + Math.cos(angle) * e2R, y: e2Cy - Math.sin(angle) * e2R });
+  }
+  x = e2Cx + e2R + sp;
+  lift();
+
+  // "k"
+  const kx = x;
+  line(kx, baseY - h * 0.45, kx, baseY + h * 0.35, 10);
+  lift();
+  line(kx + 12, baseY - h * 0.1, kx, baseY + h * 0.08, 8);
+  line(kx, baseY + h * 0.08, kx + 12, baseY + h * 0.35, 8);
+  x = kx + 12 + sp;
+  lift();
+
+  // "h"
+  const hx = x;
+  line(hx, baseY - h * 0.45, hx, baseY + h * 0.35, 10);
+  lift();
+  bezier(hx, baseY - h * 0.05, hx + 4, baseY - h * 0.25, hx + 10, baseY - h * 0.25, hx + 13, baseY - h * 0.05, 10);
+  line(hx + 13, baseY - h * 0.05, hx + 13, baseY + h * 0.35, 8);
+  x = hx + 13 + sp;
+  lift();
+
+  // "a"
+  const aR = 7;
+  const aCx = x + aR;
+  const aCy = baseY + 4;
+  // circle
+  for (let i = 0; i <= 30; i++) {
+    const t = i / 30;
+    const angle = Math.PI * 0.5 - t * Math.PI * 2;
+    pts.push({ x: aCx + Math.cos(angle) * aR, y: aCy - Math.sin(angle) * aR });
+  }
+  lift();
+  // stem
+  line(aCx + aR, aCy - aR, aCx + aR, baseY + h * 0.35, 8);
+
+  return pts;
+}
 
 const SplashScreen = ({ onFinish }: { onFinish: () => void }) => {
   const logoCanvasRef = useRef<HTMLCanvasElement>(null);
   const textCanvasRef = useRef<HTMLCanvasElement>(null);
   const [phase, setPhase] = useState<"logo" | "text" | "exit">("logo");
 
-  // Draw the logo: green rounded square with "e" and sparkle dots
+  // Animate the "e" logo with dot + tail
   useEffect(() => {
     const canvas = logoCanvasRef.current;
     if (!canvas) return;
     const ctx = canvas.getContext("2d")!;
-    const s = 200;
-    canvas.width = s * 2;
-    canvas.height = s * 2;
+    const size = 160;
+    canvas.width = size * 2;
+    canvas.height = size * 2;
     ctx.scale(2, 2);
 
-    let progress = 0;
-    const totalFrames = 50;
+    const cx = size / 2;
+    const cy = size / 2;
+    const r = 34;
+    const points = getEPoints(cx, cy, r);
+    const totalFrames = 80;
+    let frame = 0;
+    const pointsPerFrame = points.length / totalFrames;
 
-    function drawLogo(p: number) {
-      ctx.clearRect(0, 0, s, s);
-      const t = Math.min(p, 1);
+    function draw() {
+      ctx.clearRect(0, 0, size, size);
+      const currentIndex = Math.min(Math.floor(frame * pointsPerFrame), points.length - 1);
 
-      // Rounded square background with gradient
-      const pad = 20;
-      const size = s - pad * 2;
-      const radius = 36;
-      const cx = s / 2;
-      const cy = s / 2;
+      // Trail
+      if (currentIndex > 0) {
+        ctx.beginPath();
+        ctx.moveTo(points[0].x, points[0].y);
+        for (let i = 1; i <= currentIndex; i++) {
+          ctx.lineTo(points[i].x, points[i].y);
+        }
+        ctx.strokeStyle = "rgba(255,255,255,0.95)";
+        ctx.lineWidth = 3.5;
+        ctx.lineCap = "round";
+        ctx.lineJoin = "round";
+        ctx.stroke();
+      }
 
-      ctx.save();
-      ctx.globalAlpha = t;
+      // Glowing tail particles
+      const tailLen = 10;
+      for (let i = 0; i < tailLen; i++) {
+        const idx = currentIndex - i;
+        if (idx < 0) break;
+        const alpha = 1 - i / tailLen;
+        ctx.beginPath();
+        ctx.arc(points[idx].x, points[idx].y, 4.5 - i * 0.35, 0, Math.PI * 2);
+        ctx.fillStyle = `rgba(74, 222, 128, ${alpha * 0.6})`;
+        ctx.fill();
+      }
 
-      // Green gradient background
-      const grad = ctx.createLinearGradient(pad, pad, pad + size, pad + size);
-      grad.addColorStop(0, "#4ade80");
-      grad.addColorStop(0.5, "#22c55e");
-      grad.addColorStop(1, "#15803d");
-
+      // Moving dot
+      const pt = points[currentIndex];
       ctx.beginPath();
-      ctx.moveTo(pad + radius, pad);
-      ctx.lineTo(pad + size - radius, pad);
-      ctx.quadraticCurveTo(pad + size, pad, pad + size, pad + radius);
-      ctx.lineTo(pad + size, pad + size - radius);
-      ctx.quadraticCurveTo(pad + size, pad + size, pad + size - radius, pad + size);
-      ctx.lineTo(pad + radius, pad + size);
-      ctx.quadraticCurveTo(pad, pad + size, pad, pad + size - radius);
-      ctx.lineTo(pad, pad + radius);
-      ctx.quadraticCurveTo(pad, pad, pad + radius, pad);
-      ctx.closePath();
-      ctx.fillStyle = grad;
+      ctx.arc(pt.x, pt.y, 5, 0, Math.PI * 2);
+      ctx.fillStyle = "#4ade80";
+      ctx.shadowColor = "#4ade80";
+      ctx.shadowBlur = 12;
       ctx.fill();
+      ctx.shadowBlur = 0;
 
-      // Subtle glass shine
-      ctx.save();
-      ctx.clip();
-      const shine = ctx.createLinearGradient(pad, pad, pad + size * 0.6, pad + size * 0.6);
-      shine.addColorStop(0, "rgba(255,255,255,0.25)");
-      shine.addColorStop(0.5, "rgba(255,255,255,0.05)");
-      shine.addColorStop(1, "rgba(255,255,255,0)");
-      ctx.fillStyle = shine;
-      ctx.fillRect(pad, pad, size, size);
-      ctx.restore();
-
-      // Draw "e" letter
-      if (t > 0.2) {
-        const eAlpha = Math.min((t - 0.2) / 0.4, 1);
-        ctx.globalAlpha = eAlpha;
-        ctx.font = "bold 80px 'Georgia', serif";
-        ctx.fillStyle = "#15503a";
-        ctx.textAlign = "center";
-        ctx.textBaseline = "middle";
-        ctx.fillText("e", cx - 4, cy + 6);
-      }
-
-      // Sparkle dots (top-right area)
-      if (t > 0.5) {
-        const sparkleAlpha = Math.min((t - 0.5) / 0.3, 1);
-        ctx.globalAlpha = sparkleAlpha;
-        const dots = [
-          { x: cx + 24, y: cy - 32, r: 3.5 },
-          { x: cx + 34, y: cy - 38, r: 2.5 },
-          { x: cx + 30, y: cy - 24, r: 2 },
-          { x: cx + 40, y: cy - 30, r: 3 },
-          { x: cx + 36, y: cy - 44, r: 2 },
-          { x: cx + 46, y: cy - 36, r: 2.5 },
-          { x: cx + 28, y: cy - 46, r: 1.8 },
-        ];
-        dots.forEach((dot) => {
-          ctx.beginPath();
-          ctx.arc(dot.x, dot.y, dot.r, 0, Math.PI * 2);
-          ctx.fillStyle = "rgba(255,255,255,0.9)";
-          ctx.fill();
-        });
-      }
-
-      ctx.restore();
-    }
-
-    function animate() {
-      const t = progress / totalFrames;
-      drawLogo(t);
-      progress++;
-      if (progress <= totalFrames) {
-        requestAnimationFrame(animate);
+      frame++;
+      if (frame <= totalFrames) {
+        requestAnimationFrame(draw);
       }
     }
 
-    animate();
+    draw();
   }, []);
 
-  // Handwriting animation for "eLekha"
+  // Animate "e-Lekha" text with same dot + tail style
   useEffect(() => {
     if (phase !== "text") return;
     const canvas = textCanvasRef.current;
     if (!canvas) return;
     const ctx = canvas.getContext("2d")!;
-    const w = 400;
-    const h = 80;
+    const w = 320;
+    const h = 60;
     canvas.width = w * 2;
     canvas.height = h * 2;
     ctx.scale(2, 2);
 
-    // Pre-render the full text to get its image data
-    ctx.font = "bold 42px 'Georgia', serif";
-    ctx.fillStyle = "#ffffff";
-    ctx.textBaseline = "middle";
-    ctx.textAlign = "left";
+    const rawPoints = getTextPoints();
+    const offsetX = (w - 140) / 2; // center the text ~140px wide
+    const offsetY = h / 2;
 
-    // Measure text
-    const textStr = "eLekha";
-    const metrics = ctx.measureText(textStr);
-    const textWidth = metrics.width;
-    const startX = (w - textWidth) / 2;
+    // Separate into strokes
+    const strokes: { x: number; y: number }[][] = [];
+    let current: { x: number; y: number }[] = [];
+    for (const p of rawPoints) {
+      if (p.lift) {
+        if (current.length > 0) strokes.push(current);
+        current = [];
+      } else {
+        current.push({ x: p.x + offsetX, y: p.y + offsetY });
+      }
+    }
+    if (current.length > 0) strokes.push(current);
 
-    // Draw full text offscreen to capture pixel data
-    ctx.clearRect(0, 0, w, h);
-    ctx.fillText(textStr, startX, h / 2);
-    const fullImageData = ctx.getImageData(0, 0, w * 2, h * 2);
+    // Flatten for animation
+    const allPoints: { x: number; y: number; strokeStart?: boolean }[] = [];
+    strokes.forEach((stroke) => {
+      stroke.forEach((p, i) => {
+        allPoints.push({ ...p, strokeStart: i === 0 });
+      });
+    });
 
-    // Clear and animate with left-to-right reveal
-    ctx.clearRect(0, 0, w, h);
+    const totalFrames = 100;
+    let frame = 0;
+    const pointsPerFrame = allPoints.length / totalFrames;
 
-    let revealX = 0;
-    const totalRevealFrames = 60;
-    const revealWidth = w * 2; // in canvas pixels
+    // Accumulate drawn strokes
+    const drawnStrokes: { x: number; y: number }[][] = [[]];
 
-    function animateText() {
+    function draw() {
       ctx.clearRect(0, 0, w, h);
+      const currentIndex = Math.min(Math.floor(frame * pointsPerFrame), allPoints.length - 1);
 
-      // Put the full image data
-      const tempCanvas = document.createElement("canvas");
-      tempCanvas.width = w * 2;
-      tempCanvas.height = h * 2;
-      const tempCtx = tempCanvas.getContext("2d")!;
-      tempCtx.putImageData(fullImageData, 0, 0);
-
-      // Draw only the revealed portion
-      const currentReveal = Math.min(revealX, revealWidth);
-      if (currentReveal > 0) {
-        ctx.drawImage(tempCanvas, 0, 0, currentReveal, h * 2, 0, 0, currentReveal / 2, h);
+      // Rebuild drawn strokes up to currentIndex
+      drawnStrokes.length = 0;
+      drawnStrokes.push([]);
+      for (let i = 0; i <= currentIndex; i++) {
+        if (allPoints[i].strokeStart && drawnStrokes[drawnStrokes.length - 1].length > 0) {
+          drawnStrokes.push([]);
+        }
+        drawnStrokes[drawnStrokes.length - 1].push(allPoints[i]);
       }
 
-      // Draw a subtle cursor/pen at the reveal edge
-      if (revealX < revealWidth) {
-        const cursorX = currentReveal / 2;
+      // Draw all completed strokes
+      for (const stroke of drawnStrokes) {
+        if (stroke.length < 2) continue;
         ctx.beginPath();
-        ctx.arc(cursorX, h / 2, 3, 0, Math.PI * 2);
-        ctx.fillStyle = "rgba(255,255,255,0.8)";
+        ctx.moveTo(stroke[0].x, stroke[0].y);
+        for (let i = 1; i < stroke.length; i++) {
+          ctx.lineTo(stroke[i].x, stroke[i].y);
+        }
+        ctx.strokeStyle = "rgba(255,255,255,0.95)";
+        ctx.lineWidth = 2.5;
+        ctx.lineCap = "round";
+        ctx.lineJoin = "round";
+        ctx.stroke();
+      }
+
+      // Tail glow
+      const tailLen = 8;
+      for (let i = 0; i < tailLen; i++) {
+        const idx = currentIndex - i;
+        if (idx < 0) break;
+        if (allPoints[idx].strokeStart && i > 0) break;
+        const alpha = 1 - i / tailLen;
+        ctx.beginPath();
+        ctx.arc(allPoints[idx].x, allPoints[idx].y, 3.5 - i * 0.3, 0, Math.PI * 2);
+        ctx.fillStyle = `rgba(74, 222, 128, ${alpha * 0.5})`;
         ctx.fill();
       }
 
-      revealX += revealWidth / totalRevealFrames;
+      // Dot
+      const pt = allPoints[currentIndex];
+      ctx.beginPath();
+      ctx.arc(pt.x, pt.y, 4, 0, Math.PI * 2);
+      ctx.fillStyle = "#4ade80";
+      ctx.shadowColor = "#4ade80";
+      ctx.shadowBlur = 10;
+      ctx.fill();
+      ctx.shadowBlur = 0;
 
-      if (revealX <= revealWidth + 10) {
-        requestAnimationFrame(animateText);
+      frame++;
+      if (frame <= totalFrames) {
+        requestAnimationFrame(draw);
       }
     }
 
-    animateText();
+    draw();
   }, [phase]);
 
   // Phase transitions
   useEffect(() => {
-    const t1 = setTimeout(() => setPhase("text"), 1200);
-    const t2 = setTimeout(() => setPhase("exit"), 3200);
-    const t3 = setTimeout(onFinish, 3800);
+    const t1 = setTimeout(() => setPhase("text"), 1600);
+    const t2 = setTimeout(() => setPhase("exit"), 3800);
+    const t3 = setTimeout(onFinish, 4400);
     return () => {
       clearTimeout(t1);
       clearTimeout(t2);
@@ -199,16 +322,16 @@ const SplashScreen = ({ onFinish }: { onFinish: () => void }) => {
         phase === "exit" ? "opacity-0" : "opacity-100"
       }`}
     >
-      {/* Logo icon */}
-      <div className="w-[100px] h-[100px] flex items-center justify-center">
-        <canvas ref={logoCanvasRef} className="w-[100px] h-[100px]" />
+      {/* Animated "e" logo */}
+      <div className="w-20 h-20 flex items-center justify-center">
+        <canvas ref={logoCanvasRef} className="w-20 h-20" />
       </div>
 
-      {/* Handwritten text reveal */}
-      <div className="mt-6">
+      {/* Animated "e-Lekha" text */}
+      <div className="mt-5">
         <canvas
           ref={textCanvasRef}
-          className="w-[200px] h-[40px]"
+          className="w-[160px] h-[30px]"
           style={{ opacity: phase === "logo" ? 0 : 1, transition: "opacity 0.3s" }}
         />
       </div>

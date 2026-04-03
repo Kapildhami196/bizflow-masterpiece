@@ -2,136 +2,171 @@ import { useEffect, useState, useRef, useCallback } from "react";
 
 const SplashScreen = ({ onFinish }: { onFinish: () => void }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const [phase, setPhase] = useState<"draw" | "text" | "exit">("draw");
-  const [textVisible, setTextVisible] = useState(false);
+  const [phase, setPhase] = useState<"init" | "dots" | "logo" | "text" | "tagline" | "exit">("init");
+  const animRef = useRef<number>(0);
+  const skipRef = useRef(false);
+
+  const handleSkip = useCallback(() => {
+    skipRef.current = true;
+    onFinish();
+  }, [onFinish]);
 
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
     const ctx = canvas.getContext("2d")!;
-    const dpr = 2;
-    const W = 300;
-    const H = 120;
+    const dpr = window.devicePixelRatio || 2;
+    const W = 400;
+    const H = 400;
     canvas.width = W * dpr;
     canvas.height = H * dpr;
     ctx.scale(dpr, dpr);
 
-    // "e" path: horizontal bar then counter-clockwise arc
-    const ePoints: { x: number; y: number }[] = [];
-    const eCx = 110, eCy = 55, eR = 28;
-    // bar from left to right
-    for (let i = 0; i <= 15; i++) {
-      const t = i / 15;
-      ePoints.push({ x: eCx - eR + t * eR * 2, y: eCy });
-    }
-    // arc counter-clockwise from 0 to ~290 degrees
-    for (let i = 0; i <= 40; i++) {
-      const t = i / 40;
-      const angle = -t * Math.PI * 1.62;
-      ePoints.push({ x: eCx + Math.cos(angle) * eR, y: eCy - Math.sin(angle) * eR });
-    }
+    // Logo params
+    const cx = W / 2;
+    const cy = H / 2;
+    const logoRadius = 52;
 
-    // "L" path: vertical line down then horizontal right
-    const lPoints: { x: number; y: number }[] = [];
-    const lx = 160, ly = 28;
-    // vertical stroke top to bottom
-    for (let i = 0; i <= 20; i++) {
-      const t = i / 20;
-      lPoints.push({ x: lx, y: ly + t * 55 });
-    }
-    // horizontal stroke
-    for (let i = 0; i <= 12; i++) {
-      const t = i / 12;
-      lPoints.push({ x: lx + t * 30, y: ly + 55 });
+    // Dot animation params
+    const dotStartX_left = -30;
+    const dotStartX_right = W + 30;
+    const dotEndX_left = cx - 14; // where "e" sits
+    const dotEndX_right = cx + 14; // where "L" sits
+    const dotY = cy;
+
+    const totalDuration = 2800; // ms
+    const dotTravelDuration = 800;
+    const logoRevealDuration = 400;
+    const startTime = performance.now();
+
+    function easeOutCubic(t: number) {
+      return 1 - Math.pow(1 - t, 3);
     }
 
-    const totalFrames = 80;
-    let frame = 0;
-    const tailLen = 12;
+    function easeInOutQuad(t: number) {
+      return t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2;
+    }
 
-    function drawPath(points: { x: number; y: number }[], progress: number) {
-      const idx = Math.min(Math.floor(progress * points.length), points.length - 1);
-      if (idx < 1) return;
-
-      // Draw completed stroke
-      ctx.beginPath();
-      ctx.moveTo(points[0].x, points[0].y);
-      for (let i = 1; i <= idx; i++) {
-        ctx.lineTo(points[i].x, points[i].y);
-      }
-      ctx.strokeStyle = "rgba(255,255,255,0.9)";
-      ctx.lineWidth = 4.5;
-      ctx.lineCap = "round";
-      ctx.lineJoin = "round";
-      ctx.stroke();
-
-      // Glowing tail
-      for (let i = 0; i < tailLen; i++) {
-        const ti = idx - i;
-        if (ti < 0) break;
-        const alpha = 1 - i / tailLen;
+    function drawGlowDot(x: number, y: number, tailX: number, progress: number) {
+      // Tail (fading gradient line)
+      const tailLen = Math.abs(x - tailX);
+      if (tailLen > 2) {
+        const grad = ctx.createLinearGradient(tailX, y, x, y);
+        grad.addColorStop(0, "rgba(74, 222, 128, 0)");
+        grad.addColorStop(1, "rgba(74, 222, 128, 0.5)");
         ctx.beginPath();
-        ctx.arc(points[ti].x, points[ti].y, 5 - i * 0.35, 0, Math.PI * 2);
-        ctx.fillStyle = `rgba(74, 222, 128, ${alpha * 0.5})`;
-        ctx.fill();
+        ctx.moveTo(tailX, y);
+        ctx.lineTo(x, y);
+        ctx.strokeStyle = grad;
+        ctx.lineWidth = 3;
+        ctx.lineCap = "round";
+        ctx.stroke();
       }
 
-      // Leading dot
-      const pt = points[idx];
+      // Outer glow
+      const glowGrad = ctx.createRadialGradient(x, y, 0, x, y, 18);
+      glowGrad.addColorStop(0, "rgba(74, 222, 128, 0.4)");
+      glowGrad.addColorStop(1, "rgba(74, 222, 128, 0)");
       ctx.beginPath();
-      ctx.arc(pt.x, pt.y, 5.5, 0, Math.PI * 2);
-      ctx.fillStyle = "#4ade80";
-      ctx.shadowColor = "#4ade80";
-      ctx.shadowBlur = 14;
+      ctx.arc(x, y, 18, 0, Math.PI * 2);
+      ctx.fillStyle = glowGrad;
       ctx.fill();
-      ctx.shadowBlur = 0;
-    }
 
-    function drawFinal(points: { x: number; y: number }[]) {
+      // Core dot
       ctx.beginPath();
-      ctx.moveTo(points[0].x, points[0].y);
-      for (let i = 1; i < points.length; i++) {
-        ctx.lineTo(points[i].x, points[i].y);
-      }
-      ctx.strokeStyle = "rgba(255,255,255,0.95)";
-      ctx.lineWidth = 4.5;
-      ctx.lineCap = "round";
-      ctx.lineJoin = "round";
-      ctx.stroke();
+      ctx.arc(x, y, 4, 0, Math.PI * 2);
+      ctx.fillStyle = "#4ade80";
+      ctx.fill();
     }
 
-    function animate() {
+    function drawLogo(opacity: number) {
+      ctx.save();
+      ctx.globalAlpha = opacity;
+
+      // Circle
+      ctx.beginPath();
+      ctx.arc(cx, cy, logoRadius, 0, Math.PI * 2);
+      ctx.fillStyle = "#1a6b3c";
+      ctx.fill();
+
+      // "eL" text
+      ctx.font = "bold 46px 'Inter', 'Helvetica Neue', Arial, sans-serif";
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      ctx.fillStyle = "#ffffff";
+      ctx.fillText("eL", cx, cy + 1);
+
+      ctx.restore();
+    }
+
+    function animate(now: number) {
+      if (skipRef.current) return;
+
+      const elapsed = now - startTime;
       ctx.clearRect(0, 0, W, H);
-      const progress = Math.min(frame / totalFrames, 1);
 
-      // "e" draws from left, "L" draws from right (starts slightly delayed)
-      const eProgress = Math.min(progress * 1.3, 1);
-      const lProgress = Math.min(Math.max((progress - 0.2) * 1.5, 0), 1);
+      // Phase 1: Dots travel (0 - dotTravelDuration)
+      if (elapsed < dotTravelDuration) {
+        const t = easeOutCubic(Math.min(elapsed / dotTravelDuration, 1));
+        const leftX = dotStartX_left + (dotEndX_left - dotStartX_left) * t;
+        const rightX = dotStartX_right + (dotEndX_right - dotStartX_right) * t;
 
-      drawPath(ePoints, eProgress);
-      if (lProgress > 0) drawPath(lPoints, lProgress);
+        // Tail origin moves slower
+        const tailT = easeOutCubic(Math.min(elapsed / dotTravelDuration, 1) * 0.6);
+        const leftTailX = dotStartX_left + (dotEndX_left - dotStartX_left) * tailT;
+        const rightTailX = dotStartX_right + (dotEndX_right - dotStartX_right) * tailT;
 
-      frame++;
-      if (frame <= totalFrames) {
-        requestAnimationFrame(animate);
-      } else {
-        // Final clean render without dots
-        ctx.clearRect(0, 0, W, H);
-        drawFinal(ePoints);
-        drawFinal(lPoints);
+        drawGlowDot(leftX, dotY, leftTailX, t);
+        drawGlowDot(rightX, dotY, rightTailX, t);
+      }
+      // Phase 2: Dots converge and logo reveals
+      else if (elapsed < dotTravelDuration + logoRevealDuration) {
+        const t = (elapsed - dotTravelDuration) / logoRevealDuration;
+        const logoOpacity = easeInOutQuad(Math.min(t, 1));
+
+        // Dots fade out
+        const dotFade = 1 - easeInOutQuad(Math.min(t * 2, 1));
+        if (dotFade > 0) {
+          ctx.globalAlpha = dotFade;
+          drawGlowDot(dotEndX_left, dotY, dotEndX_left - 20, 1);
+          drawGlowDot(dotEndX_right, dotY, dotEndX_right + 20, 1);
+          ctx.globalAlpha = 1;
+        }
+
+        drawLogo(logoOpacity);
+      }
+      // Phase 3: Logo stable
+      else {
+        drawLogo(1);
+      }
+
+      if (elapsed < totalDuration) {
+        animRef.current = requestAnimationFrame(animate);
       }
     }
 
-    animate();
-  }, []);
+    // Start after brief delay
+    const initTimer = setTimeout(() => {
+      setPhase("dots");
+      animRef.current = requestAnimationFrame(animate);
+    }, 200);
 
-  // Phase transitions
-  useEffect(() => {
-    const t1 = setTimeout(() => { setPhase("text"); setTextVisible(true); }, 1800);
-    const t2 = setTimeout(() => setPhase("exit"), 3400);
-    const t3 = setTimeout(onFinish, 3900);
-    return () => { clearTimeout(t1); clearTimeout(t2); clearTimeout(t3); };
+    // Phase timers
+    const t1 = setTimeout(() => setPhase("logo"), dotTravelDuration + 200);
+    const t2 = setTimeout(() => setPhase("text"), dotTravelDuration + logoRevealDuration + 300);
+    const t3 = setTimeout(() => setPhase("tagline"), dotTravelDuration + logoRevealDuration + 700);
+    const t4 = setTimeout(() => setPhase("exit"), totalDuration + 200);
+    const t5 = setTimeout(() => { if (!skipRef.current) onFinish(); }, totalDuration + 700);
+
+    return () => {
+      cancelAnimationFrame(animRef.current);
+      clearTimeout(initTimer);
+      [t1, t2, t3, t4, t5].forEach(clearTimeout);
+    };
   }, [onFinish]);
+
+  const showText = phase === "text" || phase === "tagline" || phase === "exit";
+  const showTagline = phase === "tagline" || phase === "exit";
 
   return (
     <div
@@ -139,30 +174,21 @@ const SplashScreen = ({ onFinish }: { onFinish: () => void }) => {
         phase === "exit" ? "opacity-0 pointer-events-none" : "opacity-100"
       }`}
     >
-      {/* Subtle radial glow */}
-      <div
-        className="absolute rounded-full"
-        style={{
-          width: 280,
-          height: 280,
-          background: "radial-gradient(circle, rgba(74,222,128,0.06) 0%, transparent 70%)",
-        }}
-      />
-
-      {/* "eL" canvas animation */}
+      {/* Canvas for dot + logo animation */}
       <canvas
         ref={canvasRef}
-        className="w-[150px] h-[60px]"
+        className="w-[200px] h-[200px]"
+        style={{ marginBottom: -20 }}
       />
 
-      {/* "e-Lekha" text below */}
+      {/* Wordmark */}
       <p
-        className="mt-4 text-2xl font-light tracking-[0.15em] transition-all duration-700"
+        className="text-2xl font-semibold tracking-wide transition-all duration-500"
         style={{
-          color: "rgba(255,255,255,0.9)",
-          opacity: textVisible ? 1 : 0,
-          transform: textVisible ? "translateY(0)" : "translateY(8px)",
-          fontFamily: "'Georgia', serif",
+          color: "rgba(255,255,255,0.95)",
+          opacity: showText ? 1 : 0,
+          transform: showText ? "translateY(0)" : "translateY(12px)",
+          fontFamily: "'Inter', 'Helvetica Neue', Arial, sans-serif",
         }}
       >
         e-Lekha
@@ -170,16 +196,27 @@ const SplashScreen = ({ onFinish }: { onFinish: () => void }) => {
 
       {/* Tagline */}
       <p
-        className="mt-2 text-xs tracking-[0.2em] uppercase transition-all duration-700"
+        className="mt-1.5 text-xs tracking-widest uppercase transition-all duration-500"
         style={{
-          color: "rgba(255,255,255,0.4)",
-          opacity: textVisible ? 1 : 0,
-          transform: textVisible ? "translateY(0)" : "translateY(6px)",
-          transitionDelay: "0.3s",
+          color: "rgba(255,255,255,0.45)",
+          opacity: showTagline ? 1 : 0,
+          transform: showTagline ? "translateY(0)" : "translateY(8px)",
         }}
       >
         Business Management
       </p>
+
+      {/* Skip */}
+      <button
+        onClick={handleSkip}
+        className="absolute bottom-10 text-sm transition-opacity duration-300"
+        style={{
+          color: "rgba(255,255,255,0.4)",
+          opacity: phase !== "init" ? 1 : 0,
+        }}
+      >
+        Skip
+      </button>
     </div>
   );
 };

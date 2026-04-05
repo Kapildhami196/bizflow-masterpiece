@@ -6,7 +6,7 @@ import {
   PieChart, Target, AlertTriangle, CheckCircle2,
 } from "lucide-react";
 import { toast } from "sonner";
-import { PieChart as RPieChart, Pie, Cell, ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip } from "recharts";
+
 
 interface Budget {
   id: string;
@@ -45,8 +45,6 @@ const BudgetPage = () => {
   const totalSpent = budgets.reduce((s, b) => s + b.spent, 0);
   const totalRemaining = totalAllocated - totalSpent;
 
-  const pieData = budgets.map(b => ({ name: b.name, value: b.spent }));
-  const barData = budgets.map(b => ({ name: b.name.slice(0, 8), allocated: b.allocated, spent: b.spent }));
 
   const getProgress = (b: Budget) => Math.min((b.spent / b.allocated) * 100, 100);
   const getStatus = (b: Budget) => {
@@ -146,30 +144,6 @@ const BudgetPage = () => {
         </div>
       </div>
 
-      {/* Charts */}
-      <div className="grid grid-cols-2 gap-2 px-4 mt-3">
-        <div className="bg-card border border-border rounded-xl p-3">
-          <p className="text-[10px] font-semibold text-muted-foreground uppercase mb-2">Spending Distribution</p>
-          <ResponsiveContainer width="100%" height={120}>
-            <RPieChart>
-              <Pie data={pieData} cx="50%" cy="50%" innerRadius={25} outerRadius={50} dataKey="value" stroke="none">
-                {pieData.map((_, i) => <Cell key={i} fill={budgets[i]?.color || COLORS[i % COLORS.length]} />)}
-              </Pie>
-            </RPieChart>
-          </ResponsiveContainer>
-        </div>
-        <div className="bg-card border border-border rounded-xl p-3">
-          <p className="text-[10px] font-semibold text-muted-foreground uppercase mb-2">Budget vs Spent</p>
-          <ResponsiveContainer width="100%" height={120}>
-            <BarChart data={barData.slice(0, 4)}>
-              <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-              <XAxis dataKey="name" tick={{ fontSize: 8 }} />
-              <Bar dataKey="allocated" fill="hsl(var(--primary))" radius={[2, 2, 0, 0]} />
-              <Bar dataKey="spent" fill="hsl(var(--destructive))" radius={[2, 2, 0, 0]} />
-            </BarChart>
-          </ResponsiveContainer>
-        </div>
-      </div>
 
       {/* Budget List */}
       <SectionHeader title="Budgets" />

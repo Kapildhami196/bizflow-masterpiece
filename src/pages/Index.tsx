@@ -1,4 +1,4 @@
-import { Bell, ArrowUpRight, ArrowDownLeft, TrendingUp, TrendingDown, AlertCircle, Package, FileText, Users, ArrowLeftRight } from "lucide-react";
+import { Bell, ArrowUpRight, ArrowDownLeft, TrendingUp, TrendingDown, AlertCircle, Package, FileText, Users, ArrowLeftRight, ClipboardList, PiggyBank } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { BottomNav } from "@/components/layout/BottomNav";
 import { QuickActionCard } from "@/components/shared/QuickActionCard";
@@ -81,27 +81,13 @@ const HomePage = () => {
 
         {/* Quick Actions */}
         <SectionHeader title="Quick Actions" />
-        <div className="px-4 grid grid-cols-4 gap-3">
-          <QuickActionCard
-            icon={<Package size={22} />}
-            label="Products"
-            onClick={() => navigate("/products")}
-          />
-          <QuickActionCard
-            icon={<FileText size={22} />}
-            label="Billing"
-            onClick={() => navigate("/billing")}
-          />
-          <QuickActionCard
-            icon={<Users size={22} />}
-            label="Contacts"
-            onClick={() => navigate("/contacts")}
-          />
-          <QuickActionCard
-            icon={<ArrowLeftRight size={22} />}
-            label="Txns"
-            onClick={() => navigate("/transactions")}
-          />
+        <div className="px-4 grid grid-cols-3 gap-3">
+          <QuickActionCard icon={<Package size={22} />} label="Products" onClick={() => navigate("/products")} />
+          <QuickActionCard icon={<FileText size={22} />} label="Billing" onClick={() => navigate("/billing")} />
+          <QuickActionCard icon={<Users size={22} />} label="Contacts" onClick={() => navigate("/contacts")} />
+          <QuickActionCard icon={<ArrowLeftRight size={22} />} label="Txns" onClick={() => navigate("/transactions")} />
+          <QuickActionCard icon={<ClipboardList size={22} />} label="Orders" onClick={() => navigate("/orders")} />
+          <QuickActionCard icon={<PiggyBank size={22} />} label="Budget" onClick={() => navigate("/budget")} />
         </div>
 
         {/* Due Today Cards */}

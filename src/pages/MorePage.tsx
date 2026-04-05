@@ -5,6 +5,7 @@ import { SectionHeader } from "@/components/shared/SectionHeader";
 import {
   Package, Warehouse, BarChart3, Tag, Wallet,
   Users, Settings, ShoppingCart, FileText, User, CreditCard, ArrowLeftRight, BookOpen,
+  ClipboardList, PiggyBank,
 } from "lucide-react";
 
 const MorePage = () => {
@@ -21,6 +22,8 @@ const MorePage = () => {
         <MenuListItem icon={<ShoppingCart size={18} />} title="POS" subtitle="Point of sale checkout" onClick={() => navigate("/pos")} />
         <MenuListItem icon={<FileText size={18} />} title="Billing & Invoice" subtitle="Invoices, receipts, credit notes" onClick={() => navigate("/billing")} />
         <MenuListItem icon={<CreditCard size={18} />} title="EMI & Loans" subtitle="EMI plans & loan tracking" onClick={() => navigate("/emi-loans")} />
+        <MenuListItem icon={<ClipboardList size={18} />} title="Order Management" subtitle="Track & manage orders" onClick={() => navigate("/orders")} />
+        <MenuListItem icon={<PiggyBank size={18} />} title="Budget Management" subtitle="Budget tracking & planning" onClick={() => navigate("/budget")} />
       </div>
 
       <SectionHeader title="Management" />

@@ -54,6 +54,17 @@ const SettingsPage = () => {
   const [biometricEnabled, setBiometricEnabled] = useState(false);
   const [twoFAEnabled, setTwoFAEnabled] = useState(false);
 
+  // Rate & Bug
+  const [showRate, setShowRate] = useState(false);
+  const [rateStars, setRateStars] = useState(0);
+  const [rateReview, setRateReview] = useState("");
+  const [rateSubmitted, setRateSubmitted] = useState(false);
+  const [showBugReport, setShowBugReport] = useState(false);
+  const [bugTitle, setBugTitle] = useState("");
+  const [bugDescription, setBugDescription] = useState("");
+  const [bugSeverity, setBugSeverity] = useState("Medium");
+  const [bugSubmitted, setBugSubmitted] = useState(false);
+
   const calcTax = () => {
     const amt = parseFloat(taxAmount) || 0;
     const rate = parseFloat(taxRate) || 0;
@@ -182,11 +193,13 @@ const SettingsPage = () => {
           title="Rate e-Lekha"
           subtitle="Love the app? Rate us 5 stars"
           iconBgClass="bg-warning/15 text-warning"
+          onClick={() => setShowRate(true)}
         />
         <MenuListItem
           icon={<Bug size={18} />}
           title="Report a Bug"
           subtitle="Help us improve the app"
+          onClick={() => setShowBugReport(true)}
         />
       </div>
 
@@ -591,6 +604,124 @@ const SettingsPage = () => {
         <button onClick={() => setShowNotes(false)} className="w-full bg-primary text-primary-foreground py-3.5 rounded-xl font-semibold text-sm mt-3">
           Save Notes
         </button>
+      </ModalShell>
+
+      {/* Rate e-Lekha Modal */}
+      <ModalShell show={showRate} title="Rate e-Lekha" onClose={() => { setShowRate(false); setRateSubmitted(false); setRateStars(0); setRateReview(""); }}>
+        {rateSubmitted ? (
+          <div className="text-center py-8">
+            <div className="w-16 h-16 bg-success/15 rounded-full flex items-center justify-center mx-auto mb-4">
+              <Heart size={28} className="text-success" />
+            </div>
+            <h3 className="text-lg font-bold text-card-foreground mb-1">Thank You!</h3>
+            <p className="text-sm text-muted-foreground">Your feedback helps us improve e-Lekha.</p>
+          </div>
+        ) : (
+          <div className="space-y-5">
+            <div className="text-center">
+              <p className="text-sm text-muted-foreground mb-4">How would you rate your experience?</p>
+              <div className="flex justify-center gap-2">
+                {[1, 2, 3, 4, 5].map(star => (
+                  <button key={star} onClick={() => setRateStars(star)} className="p-1 transition-transform hover:scale-110">
+                    <Star size={32} className={star <= rateStars ? "text-warning fill-warning" : "text-muted-foreground/30"} />
+                  </button>
+                ))}
+              </div>
+              {rateStars > 0 && (
+                <p className="text-xs text-muted-foreground mt-2">
+                  {rateStars <= 2 ? "We're sorry to hear that" : rateStars <= 3 ? "Thanks for your feedback" : rateStars === 4 ? "Great! Almost perfect" : "Awesome! You love it!"}
+                </p>
+              )}
+            </div>
+            <div>
+              <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Write a Review (Optional)</label>
+              <textarea
+                value={rateReview}
+                onChange={e => setRateReview(e.target.value)}
+                placeholder="Tell us what you like or what we can improve..."
+                rows={3}
+                className="w-full bg-background border border-border rounded-xl py-3 px-4 text-sm mt-1 focus:outline-none focus:ring-2 focus:ring-ring resize-none"
+              />
+            </div>
+            <button
+              onClick={() => { if (rateStars === 0) return; setRateSubmitted(true); }}
+              disabled={rateStars === 0}
+              className="w-full bg-primary text-primary-foreground py-3.5 rounded-xl font-semibold text-sm disabled:opacity-50"
+            >
+              Submit Rating
+            </button>
+          </div>
+        )}
+      </ModalShell>
+
+      {/* Report Bug Modal */}
+      <ModalShell show={showBugReport} title="Report a Bug" onClose={() => { setShowBugReport(false); setBugSubmitted(false); setBugTitle(""); setBugDescription(""); }}>
+        {bugSubmitted ? (
+          <div className="text-center py-8">
+            <div className="w-16 h-16 bg-primary/15 rounded-full flex items-center justify-center mx-auto mb-4">
+              <Bug size={28} className="text-primary" />
+            </div>
+            <h3 className="text-lg font-bold text-card-foreground mb-1">Bug Reported!</h3>
+            <p className="text-sm text-muted-foreground">Our team will look into it. Thank you for helping improve e-Lekha.</p>
+          </div>
+        ) : (
+          <div className="space-y-4">
+            <div>
+              <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Bug Title</label>
+              <input
+                value={bugTitle}
+                onChange={e => setBugTitle(e.target.value)}
+                placeholder="Briefly describe the issue"
+                className="w-full bg-background border border-border rounded-xl py-2.5 px-4 text-sm mt-1 focus:outline-none focus:ring-2 focus:ring-ring"
+              />
+            </div>
+            <div>
+              <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Description</label>
+              <textarea
+                value={bugDescription}
+                onChange={e => setBugDescription(e.target.value)}
+                placeholder="Steps to reproduce, what happened, what you expected..."
+                rows={4}
+                className="w-full bg-background border border-border rounded-xl py-3 px-4 text-sm mt-1 focus:outline-none focus:ring-2 focus:ring-ring resize-none"
+              />
+            </div>
+            <div>
+              <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Severity</label>
+              <div className="grid grid-cols-3 gap-2 mt-1">
+                {["Low", "Medium", "High"].map(s => (
+                  <button
+                    key={s}
+                    onClick={() => setBugSeverity(s)}
+                    className={`py-2.5 rounded-xl text-xs font-semibold border transition-colors ${
+                      bugSeverity === s
+                        ? s === "High" ? "bg-destructive/10 border-destructive text-destructive"
+                          : s === "Medium" ? "bg-warning/10 border-warning text-warning"
+                          : "bg-primary/10 border-primary text-primary"
+                        : "bg-background border-border text-muted-foreground"
+                    }`}
+                  >
+                    {s}
+                  </button>
+                ))}
+              </div>
+            </div>
+            <div className="bg-accent rounded-xl p-3">
+              <p className="text-[10px] text-muted-foreground">
+                <strong>Device info:</strong> {navigator.userAgent.slice(0, 60)}...
+              </p>
+              <p className="text-[10px] text-muted-foreground mt-1">
+                <strong>App version:</strong> v1.0.0
+              </p>
+            </div>
+            <button
+              onClick={() => { if (!bugTitle.trim()) return; setBugSubmitted(true); }}
+              disabled={!bugTitle.trim()}
+              className="w-full bg-primary text-primary-foreground py-3.5 rounded-xl font-semibold text-sm disabled:opacity-50"
+            >
+              Submit Bug Report
+            </button>
+          </div>
+        )}
       </ModalShell>
     </AppShell>
   );

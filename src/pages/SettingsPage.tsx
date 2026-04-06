@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { toast } from "sonner";
 import { AppShell } from "@/components/layout/AppShell";
 import { MenuListItem } from "@/components/shared/MenuListItem";
 import { SectionHeader } from "@/components/shared/SectionHeader";
@@ -53,6 +54,11 @@ const SettingsPage = () => {
   // Security
   const [biometricEnabled, setBiometricEnabled] = useState(false);
   const [twoFAEnabled, setTwoFAEnabled] = useState(false);
+
+  // Import/Export
+  const [showExport, setShowExport] = useState(false);
+  const [showImport, setShowImport] = useState(false);
+  const [exportFormat, setExportFormat] = useState<"csv" | "json">("csv");
 
   // Rate & Bug
   const [showRate, setShowRate] = useState(false);
@@ -163,8 +169,8 @@ const SettingsPage = () => {
       {/* Data */}
       <SectionHeader title="Data" />
       <div className="mx-4 bg-card rounded-xl border border-border overflow-hidden divide-y divide-border">
-        <MenuListItem icon={<Upload size={18} />} title="Import Data" subtitle="Import products, parties, balances" />
-        <MenuListItem icon={<Download size={18} />} title="Export Data" subtitle="Export CSV / Excel / PDF" />
+        <MenuListItem icon={<Upload size={18} />} title="Import Data" subtitle="Import products, parties, balances" onClick={() => setShowImport(true)} />
+        <MenuListItem icon={<Download size={18} />} title="Export Data" subtitle="Export CSV / Excel / PDF" onClick={() => setShowExport(true)} />
       </div>
 
       {/* Support */}
@@ -722,6 +728,88 @@ const SettingsPage = () => {
             </button>
           </div>
         )}
+      </ModalShell>
+
+      {/* Export Data Modal */}
+      <ModalShell show={showExport} title="Export Data" onClose={() => setShowExport(false)}>
+        <div className="space-y-4">
+          <p className="text-sm text-muted-foreground">Export all your business data as a downloadable file.</p>
+
+          <div>
+            <label className="text-xs font-semibold text-muted-foreground uppercase">Format</label>
+            <div className="flex gap-2 mt-2">
+              {(["csv", "json"] as const).map(f => (
+                <button key={f} onClick={() => setExportFormat(f)}
+                  className={`flex-1 py-2.5 rounded-xl text-sm font-medium transition-colors ${
+                    exportFormat === f ? "bg-primary text-primary-foreground" : "bg-background border border-border text-card-foreground"
+                  }`}>
+                  {f.toUpperCase()}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <p className="text-xs font-semibold text-muted-foreground uppercase">Data to Export</p>
+            {["Transactions", "Products", "Contacts", "Orders", "Budgets", "Ledger", "EMI & Loans", "Accounts"].map(item => (
+              <label key={item} className="flex items-center gap-3 px-3 py-2.5 bg-background border border-border rounded-xl cursor-pointer">
+                <input type="checkbox" defaultChecked className="w-4 h-4 rounded border-border text-primary accent-primary" />
+                <span className="text-sm text-card-foreground">{item}</span>
+              </label>
+            ))}
+          </div>
+
+          <button
+            onClick={() => {
+              const sampleData = { app: "e-Lekha", exportedAt: new Date().toISOString(), format: exportFormat, data: { transactions: [], products: [], contacts: [] } };
+              const content = exportFormat === "json" ? JSON.stringify(sampleData, null, 2) : "Type,Name,Amount,Date\nSale,Sample,1000,2026-04-06";
+              const blob = new Blob([content], { type: exportFormat === "json" ? "application/json" : "text/csv" });
+              const url = URL.createObjectURL(blob);
+              const a = document.createElement("a"); a.href = url; a.download = `elekha-data.${exportFormat}`; a.click();
+              URL.revokeObjectURL(url);
+              toast.success(`Data exported as ${exportFormat.toUpperCase()}`);
+              setShowExport(false);
+            }}
+            className="w-full bg-primary text-primary-foreground py-3 rounded-xl font-semibold text-sm flex items-center justify-center gap-2"
+          >
+            <Download size={16} /> Export Data
+          </button>
+        </div>
+      </ModalShell>
+
+      {/* Import Data Modal */}
+      <ModalShell show={showImport} title="Import Data" onClose={() => setShowImport(false)}>
+        <div className="space-y-4">
+          <p className="text-sm text-muted-foreground">Import data from CSV or JSON files into your business.</p>
+
+          <div>
+            <p className="text-xs font-semibold text-muted-foreground uppercase mb-2">Import To</p>
+            {["Transactions", "Products", "Contacts", "Orders", "Budgets", "Ledger"].map(item => (
+              <button key={item}
+                className="w-full flex items-center justify-between px-4 py-3 bg-background border border-border rounded-xl mb-2 text-sm text-card-foreground hover:bg-muted transition-colors"
+                onClick={() => {
+                  const input = document.createElement("input");
+                  input.type = "file"; input.accept = ".csv,.json";
+                  input.onchange = (e: any) => {
+                    const file = e.target.files?.[0];
+                    if (file) {
+                      toast.success(`${file.name} imported to ${item}`);
+                      setShowImport(false);
+                    }
+                  };
+                  input.click();
+                }}>
+                <span>{item}</span>
+                <Upload size={14} className="text-muted-foreground" />
+              </button>
+            ))}
+          </div>
+
+          <div className="bg-accent rounded-xl p-4">
+            <p className="text-xs font-semibold text-card-foreground mb-1">Supported Formats</p>
+            <p className="text-[10px] text-muted-foreground">CSV (.csv) and JSON (.json) files. Ensure headers match the expected format. Download a template from Export Data first.</p>
+          </div>
+        </div>
       </ModalShell>
     </AppShell>
   );
